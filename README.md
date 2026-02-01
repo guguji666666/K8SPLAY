@@ -50,7 +50,7 @@ Pod Cleaner focuses on pods that appear “normal” at a glance but are actuall
 ## 🚫 Exclusion Rules
 
 - Skip namespace: `kube-system`
-- Only evaluate pods in: `Running` and `Init` (as per your current design)
+- Only evaluate pods in: `Running` and `Init` (as per current design)
 
 ---
 
