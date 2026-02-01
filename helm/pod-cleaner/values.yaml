@@ -1,0 +1,157 @@
+# ============================================================
+# Helm Chart Default Configuration
+# Pod Cleaner - Kubernetes Pod Auto-Cleanup Tool
+# ============================================================
+
+# ----------------------------------------
+# Replica Configuration
+# ----------------------------------------
+replicaCount: 1
+
+# ----------------------------------------
+# Image Configuration
+# ----------------------------------------
+image:
+  # Image repository URL
+  repository: guguji666/pod-cleaner
+  # Image tag
+  tag: "v2.5"
+  # Image pull policy
+  # - Always: Always pull (recommended for production)
+  # - IfNotPresent: Pull only if not exists locally
+  # - Never: Never pull
+  pullPolicy: Always
+
+# ----------------------------------------
+# Image Pull Secrets (optional)
+# ----------------------------------------
+imagePullSecrets:
+  # If using private registry, uncomment and configure
+  # - name: registry-secret
+
+# ----------------------------------------
+# Service Account Configuration
+# ----------------------------------------
+serviceAccount:
+  # Whether to create service account
+  create: true
+  # Service account name
+  name: pod-cleaner-sa
+  # Whether to auto-mount service account token
+  automountServiceAccountToken: true
+
+# ----------------------------------------
+# RBAC Configuration (critical)
+# ----------------------------------------
+rbac:
+  # Whether to create RBAC resources
+  create: true
+  # RBAC rules
+  rules:
+    # Pod operation permissions
+    - apiGroups: [""]
+      resources: ["pods"]
+      verbs: ["get", "list", "watch", "delete"]
+    # Namespace read-only permissions
+    - apiGroups: [""]
+      resources: ["namespaces"]
+      verbs: ["get", "list"]
+
+# ----------------------------------------
+# Pod Security Configuration
+# ----------------------------------------
+podSecurityContext:
+  # Run user (avoid root)
+  runAsUser: 1000
+  runAsGroup: 1000
+  # Disallow privileged mode
+  runAsNonRoot: true
+  # SeLinux configuration
+  seLinuxOptions: {}
+  # Capabilities configuration
+  capabilities:
+    drop:
+      - ALL
+
+# ----------------------------------------
+# Container Security Configuration
+# ----------------------------------------
+securityContext:
+  # Allow privilege escalation
+  allowPrivilegeEscalation: false
+  # Read-only root filesystem
+  readOnlyRootFilesystem: true
+  # Capabilities configuration
+  capabilities:
+    drop:
+      - ALL
+
+# ----------------------------------------
+# Resource Configuration (limits)
+# ----------------------------------------
+resources:
+  # requests: Minimum resources needed when container starts
+  # limits: Maximum resources container can use
+  requests:
+    cpu: 100m      # 0.1 CPU core
+    memory: 128Mi  # 128 MB memory
+  limits:
+    cpu: 500m      # 0.5 CPU core
+    memory: 512Mi  # 512 MB memory
+
+# ----------------------------------------
+# Health Check Configuration
+# ----------------------------------------
+livenessProbe:
+  # HTTP health check
+  httpGet:
+    path: /health
+    port: 8080
+  # Start checking 30 seconds after startup
+  initialDelaySeconds: 30
+  # Check interval 10 seconds
+  periodSeconds: 10
+  # Timeout 5 seconds
+  timeoutSeconds: 5
+  # Failure threshold (restart after 3 consecutive failures)
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# ----------------------------------------
+# Scheduling Configuration
+# ----------------------------------------
+# Node affinity (optional)
+nodeSelector: {}
+# Toleration configuration (optional)
+tolerations: []
+# Affinity configuration (optional)
+affinity: {}
+
+# ----------------------------------------
+# Custom Configuration (ConfigMap)
+# ----------------------------------------
+config:
+  # Bark push URL (REQUIRED - set via --set when installing)
+  # Example: barkBaseUrl: "https://your-bark-server.com/DEVICE_KEY/"
+  barkBaseUrl: ""
+  # Enable Bark notifications
+  barkEnabled: true
+  # Log level
+  logLevel: "INFO"
+  # Run interval (seconds)
+  runIntervalSeconds: 600
+
+# ----------------------------------------
+# Monitoring Configuration (optional)
+# ----------------------------------------
+metrics:
+  enabled: false
+  port: 8080

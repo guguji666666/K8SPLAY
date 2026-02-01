@@ -1,0 +1,183 @@
+# ============================================================
+# Kubernetes Native Deployment Manifest
+# Deploy without Helm, use kubectl apply -f directly
+# ============================================================
+
+---
+# 1. ServiceAccount - Service account for Pod Cleaner
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pod-cleaner-sa
+  namespace: default
+  labels:
+    app: pod-cleaner
+---
+# 2. ClusterRole - Define cluster-level permissions (access all namespaces)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pod-cleaner-clusterrole
+  labels:
+    app: pod-cleaner
+rules:
+  # Read pod info (get list, view status)
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  # Delete pods (restart unhealthy pods)
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["delete"]
+  # Read namespace list (to exclude system namespaces)
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list"]
+  # Get pod logs (for diagnosis)
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list"]
+---
+# 3. ClusterRoleBinding - Bind ClusterRole to ServiceAccount (cluster-level)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pod-cleaner-clusterrolebinding
+  labels:
+    app: pod-cleaner
+subjects:
+  - kind: ServiceAccount
+    name: pod-cleaner-sa
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: pod-cleaner-clusterrole
+  apiGroup: rbac.authorization.k8s.io
+---
+# 4. Deployment - Pod Cleaner deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod-cleaner
+  namespace: default
+  labels:
+    app: pod-cleaner
+spec:
+  # Number of replicas
+  replicas: 1
+  # Selector
+  selector:
+    matchLabels:
+      app: pod-cleaner
+  # Rolling update strategy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  # Pod template
+  template:
+    metadata:
+      labels:
+        app: pod-cleaner
+    spec:
+      # Use custom service account
+      serviceAccountName: pod-cleaner-sa
+      # Security context
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+      # Container definition
+      containers:
+        - name: pod-cleaner
+          # Image URL (replace with your registry)
+          image: guguji666/pod-cleaner:v2.6
+          imagePullPolicy: Always
+          # Environment variables (REPLACE with your Bark server)
+          env:
+            # Bark push URL (REQUIRED - replace with your Bark server URL)
+            - name: BARK_BASE_URL
+              value: "https://your-bark-server.com/DEVICE_KEY"
+            # Enable Bark notifications
+            - name: BARK_ENABLED
+              value: "true"
+            # Log level
+            - name: LOG_LEVEL
+              value: "INFO"
+          # Resource limits
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          # Security context
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      # Node selector (optional)
+      # nodeSelector:
+      #   node-role.kubernetes.io/worker: ""
+---
+# 5. CronJob (optional) - If not using Deployment main loop, use CronJob
+# Runs every 10 minutes
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pod-cleaner-cron
+  namespace: default
+  labels:
+    app: pod-cleaner
+spec:
+  # Timezone
+  schedule: "*/10 * * * *"
+  # Concurrency policy
+  concurrencyPolicy: Forbid  # Don't run if previous not finished
+  # Job history
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  # Job template
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: pod-cleaner
+        spec:
+          serviceAccountName: pod-cleaner-sa
+          restartPolicy: Never
+          containers:
+            - name: pod-cleaner
+              image: guguji666/pod-cleaner:v2.6
+              imagePullPolicy: Always
+              # Environment variables (REPLACE with your Bark server)
+              env:
+                - name: BARK_BASE_URL
+                  value: "https://your-bark-server.com/DEVICE_KEY"
+                - name: BARK_ENABLED
+                  value: "true"
+                - name: LOG_LEVEL
+                  value: "INFO"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+
+# ============================================================
+# Deployment Instructions:
+# 1. Replace image: YOUR_REGISTRY/pod-cleaner:v1.0.0
+# 2. Deploy: kubectl apply -f k8s-manifest.yaml
+# 3. View logs: kubectl logs -l app=pod-cleaner -f
+# 4. Delete: kubectl delete -f k8s-manifest.yaml
+# ============================================================

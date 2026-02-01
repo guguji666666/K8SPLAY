@@ -1,0 +1,52 @@
+# ============================================================
+# RBAC Resources
+# ============================================================
+
+---
+# ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "pod-cleaner.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "pod-cleaner.labels" . | nindent 4 }}
+
+---
+# ClusterRole - Cluster-level permissions (supports all namespaces)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "pod-cleaner.fullname" . }}-clusterrole
+  labels:
+    {{- include "pod-cleaner.labels" . | nindent 4 }}
+rules:
+  # Pod operations
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "delete"]
+  # Namespace read-only
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list"]
+  # Pod logs
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list"]
+
+---
+# ClusterRoleBinding - Bind to ServiceAccount
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "pod-cleaner.fullname" . }}-clusterbinding
+  labels:
+    {{- include "pod-cleaner.labels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "pod-cleaner.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "pod-cleaner.fullname" . }}-clusterrole
+  apiGroup: rbac.authorization.k8s.io

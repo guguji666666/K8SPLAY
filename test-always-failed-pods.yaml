@@ -1,0 +1,51 @@
+# ============================================================
+# Namespace + Test Pod Deployment (all-in-one)
+# ============================================================
+
+---
+# 1. Create Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-failed-pods
+  labels:
+    purpose: pod-cleaner-test
+
+---
+# 2. Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-always-failed-pods
+  namespace: test-failed-pods
+  labels:
+    app: test-always-failed
+    purpose: pod-cleaner-test
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: test-always-failed
+  template:
+    metadata:
+      labels:
+        app: test-always-failed
+    spec:
+      containers:
+        - name: test
+          image: busybox:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Pod starting..."
+              sleep 10
+              echo "Exiting! Pod will be deleted..."
+              exit 1
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "16Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"

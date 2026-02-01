@@ -1,0 +1,15 @@
+# ============================================================
+# Project Dependencies File
+# Pod Cleaner - Kubernetes Pod Auto-Cleanup Tool
+# ============================================================
+
+# Kubernetes Python client
+# Used to interact with K8s API, get pod status, execute delete operations
+kubernetes==29.0.0
+
+# DateTime handling
+# Used to generate timestamps, format log output
+python-dateutil==2.8.2
+
+# HTTP requests library (installed by kubernetes package)
+# requests==2.31.0  # Automatically installed by kubernetes package, no need to declare

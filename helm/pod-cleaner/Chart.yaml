@@ -1,0 +1,30 @@
+# ============================================================
+# Helm Chart Metadata
+# Pod Cleaner - Kubernetes Pod Auto-Cleanup Tool
+# ============================================================
+
+apiVersion: v2
+# Application name (Helm Release name)
+name: pod-cleaner
+# Application description
+description: |
+  Kubernetes Pod Auto-Cleanup Tool
+  Automatically detects and restarts pods in abnormal state (not Running or Init)
+# Application version (Semantic Versioning)
+version: 1.0.0
+# Application version (matches Dockerfile)
+appVersion: "1.0.0"
+# Maintainer information
+maintainers:
+  - name: Allen Gu
+    email: test@gmail.com
+# Keywords
+keywords:
+  - kubernetes
+  - pod
+  - cleaner
+  - automation
+# Category
+category: utility
+# Open source license
+license: MIT
