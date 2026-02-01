@@ -125,7 +125,7 @@ export BARK_BASE_URL="https://api.day.app/YOUR_DEVICE_KEY"
 export BARK_ENABLED="true"
 ```
 
-### Self-host Bark Server (Docker Compose)
+### Self-host Bark Server (Docker Compose) for quick test
 
 ```yaml
 version: "3.8"
@@ -216,6 +216,9 @@ python3 test-detection-logic.py --k8s
 python3 test-detection-logic.py --k8s -n test-failed-pods
 ```
 
+screenshot for `python3 test-detection-logic.py --k8s`
+<img width="1158" height="486" alt="image" src="https://github.com/user-attachments/assets/f760f79c-8a36-4609-bc00-9aeec9916825" />
+
 Covered cases:
 
 * CrashLoopBackOff (waiting)
@@ -258,7 +261,7 @@ kubectl get deployment pod-cleaner
 kubectl logs -l app=pod-cleaner -f
 ```
 
-if you want to existing docker image
+if you want to use existing docker image
 ```bash
 helm install pod-cleaner ./helm/pod-cleaner \
   --set image.repository=guguji666/pod-cleaner \
@@ -270,6 +273,14 @@ helm install pod-cleaner ./helm/pod-cleaner \
 kubectl get deployment pod-cleaner
 kubectl logs -l app=pod-cleaner -f
 ```
+
+if you want to check the logs of pod-cleaner lively
+```bash
+kubectl get pods
+kubectl logs -f <pod id>
+```
+<img width="2934" height="1892" alt="image" src="https://github.com/user-attachments/assets/c437ce4c-aa28-42a5-aa1a-0574e036878b" />
+
 
 ### Method B: Native Manifest
 
@@ -309,7 +320,7 @@ pod-cleaner/
 
 ---
 
-## 🧩 Interview Highlights (Design Talking Points)
+## 🧩 Design points
 
 ### 1) Large-scale performance
 
@@ -333,7 +344,7 @@ pod-cleaner/
 
 ---
 
-## 🗺️ Roadmap
+## 🗺️ Roadmap for improvement in future 
 
 * [ ] Slack webhook notifications
 * [ ] Email (SMTP) notifications
