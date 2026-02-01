@@ -113,6 +113,8 @@ kubectl config view
 ---
 
 ## 🛎️ Bark Notifications (Optional)
+### [Bark github](https://github.com/Finb/bark-server)
+### [Bark request methods](https://bark.day.app/#/en-us/tutorial?id=request-methods)
 
 Pod Cleaner can send push notifications via Bark.
 
