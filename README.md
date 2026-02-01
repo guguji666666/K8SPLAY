@@ -216,7 +216,7 @@ python3 test-detection-logic.py --k8s
 python3 test-detection-logic.py --k8s -n test-failed-pods
 ```
 
-screenshot for `python3 test-detection-logic.py --k8s`
+screenshot for `python3 test-detection-logic.py --k8s` <br>
 <img width="1158" height="486" alt="image" src="https://github.com/user-attachments/assets/f760f79c-8a36-4609-bc00-9aeec9916825" />
 
 Covered cases:
@@ -225,6 +225,14 @@ Covered cases:
 * ImagePullBackOff (waiting)
 * Abnormal terminated (exitCode != 0)
 * Normal running / normal terminated (exitCode 0)
+
+
+screenshot for Step 4: Send cleanup notification after restarting unhealthy pods in main.py <br>
+<img width="1206" height="2622" alt="image" src="https://github.com/user-attachments/assets/3c8509fd-2a6e-4224-afc0-9f7623b8ebc4" />
+
+screenshot for Step 5: trigger notifications if some pods still failed to start  in main.py <br>
+<img width="1206" height="2622" alt="image" src="https://github.com/user-attachments/assets/f04a327e-3254-4da8-a6d1-af02485acccb" />
+
 
 ### 2) `test-always-failed-pods.yaml` — Always-failing pods
 
@@ -359,7 +367,4 @@ pod-cleaner/
 
 ---
 
-## 📄 License
-
-MIT
 
