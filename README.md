@@ -245,10 +245,24 @@ RESTARTS: keeps increasing
 
 ### Method A: Helm (Recommended)
 
+if you build your own docker image
 ```bash
 helm install pod-cleaner ./helm/pod-cleaner \
-  --set image.repository=YOUR_REGISTRY/pod-cleaner \
-  --set image.tag=v2.6.0 \
+  --set image.repository=<your repo> \
+  --set image.tag=<your image tag> \
+  --set config.barkBaseUrl="https://your-bark-server.com/DEVICE_KEY" \
+  --set config.barkEnabled=true \
+  --set config.logLevel="INFO"
+
+kubectl get deployment pod-cleaner
+kubectl logs -l app=pod-cleaner -f
+```
+
+if you want to existing docker image
+```bash
+helm install pod-cleaner ./helm/pod-cleaner \
+  --set image.repository=guguji666/pod-cleaner \
+  --set image.tag=v2.6 \
   --set config.barkBaseUrl="https://your-bark-server.com/DEVICE_KEY" \
   --set config.barkEnabled=true \
   --set config.logLevel="INFO"
