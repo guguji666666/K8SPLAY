@@ -132,7 +132,7 @@ python3 test-detection-logic.py
 python3 test-detection-logic.py --k8s
 
 # Check a namespace
-python3 test-detection-logic.py --k8s -n test-failed-pods
+python3 test-detection-logic.py --k8s -n test-failures
 ```
 
 screenshot for `python3 test-detection-logic.py --k8s` <br>
@@ -153,21 +153,34 @@ screenshot for Step 5: trigger notifications if some pods still failed to start 
 <img width="1206" height="2622" alt="image" src="https://github.com/user-attachments/assets/f04a327e-3254-4da8-a6d1-af02485acccb" />
 
 
-### 2) `test-always-failed-pods.yaml` — Always-failing pods
+### 2) `test-failure-pods.yaml` — Failure Simulation Pods
 
-Creates a pod that exits with code `1` after 10 seconds, producing CrashLoopBackOff.
+Creates 6 types of failing pods for testing pod-cleaner detection:
+
+| Type | Failure Pattern | Pod Phase | Container State |
+|------|----------------|-----------|-----------------|
+| CrashLoopBackOff | Exits immediately, restarts repeatedly | Running | waiting (CrashLoopBackOff) |
+| ErrorExit | Runs 30s then exits with code 1 | Running | terminated (exitCode=1) |
+| InitFailure | Init container fails | Init:Error | N/A |
+| Mixed | One healthy + one failing container | Running | Mixed states |
+| ImagePullBackOff | Non-existent image | Pending | N/A |
+| OOMKilled | Memory limit exceeded | Running | OOMKilled |
 
 ```bash
-kubectl apply -f test-always-failed-pods.yaml
-kubectl get pods -n test-failed-pods -w
+kubectl apply -f test-failure-pods.yaml
+kubectl get pods -n test-failures -w
 ```
 
-Expected:
+Expected observations:
 
-```text
-STATUS: CrashLoopBackOff
-RESTARTS: keeps increasing
-```
+| Pod Type | Expected Status | Restart Behavior |
+|----------|----------------|-----------------|
+| crashloop-pod | CrashLoopBackOff | RESTARTS increasing |
+| error-exit-pod | Running → Error | RESTARTS 0→1+ |
+| init-failure-pod | Init:Error | RESTARTS 1+ |
+| mixed-pod | Running | One container restarting |
+| image-pull-fail-pod | Pending/ImagePullBackOff | No restarts |
+| oom-pod | Error/OOMKilled | RESTARTS 1+ |
 
 ---
 
@@ -518,7 +531,7 @@ pod-cleaner/
 │       ├── rbac.yaml
 │       └── _helpers.tpl
 ├── test-detection-logic.py
-├── test-always-failed-pods.yaml
+├── test-failure-pods.yaml
 └── README.md
 ```
 
