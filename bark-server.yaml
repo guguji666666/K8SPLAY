@@ -86,7 +86,7 @@ spec:
           claimName: bark-pvc
 
 ---
-# Service (ClusterIP - internal access only)
+# Service (NodePort - external access)
 apiVersion: v1
 kind: Service
 metadata:
@@ -95,12 +95,13 @@ metadata:
   labels:
     app: bark-server
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: bark-server
   ports:
   - port: 8080
     targetPort: 8080
+    nodePort: 30080
     name: http
 
 ---

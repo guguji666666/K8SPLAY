@@ -117,20 +117,20 @@ For production deployments, deploy Bark server to Kubernetes using the provided 
 kubectl apply -f bark-server.yaml
 
 # Check deployment status
-kubectl get deployment bark-server
-kubectl get svc bark-server
+kubectl get deployment bark -n bark
+kubectl get svc bark -n bark
 
-# Get external IP or NodePort to access the Bark UI
-kubectl get svc bark-server -o jsonpath='{.spec.ports[0].nodePort}'
+# Get NodePort to access the Bark UI
+kubectl get svc bark -n bark -o jsonpath='{.spec.ports[0].nodePort}'
 ```
 
 **Expected output:**
 ```
-NAME           READY   UP-TO-DATE   AVAILABLE   AGE
-bark-server    1/1     1            1           30s
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+bark   1/1     1            1           30s
 
-NAME           TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
-bark-server    NodePort   10.96.XXX.XXX   <none>        8080:30080/TCP   30s
+NAME   TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+bark   NodePort   10.96.XXX.XXX   <none>        8080:30080/TCP   30s
 ```
 
 **Access Bark UI:**
