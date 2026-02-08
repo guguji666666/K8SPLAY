@@ -17,7 +17,7 @@ appVersion: "1.0.0"
 # Maintainer information
 maintainers:
   - name: Allen Gu
-    email: test@gmail.com
+    email: test@test.com
 # Keywords
 keywords:
   - kubernetes

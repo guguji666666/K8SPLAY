@@ -15,7 +15,7 @@ image:
   # Image repository URL
   repository: guguji666/pod-cleaner
   # Image tag
-  tag: "v2.5"
+  tag: "latest"
   # Image pull policy
   # - Always: Always pull (recommended for production)
   # - IfNotPresent: Pull only if not exists locally
@@ -51,7 +51,7 @@ rbac:
     # Pod operation permissions
     - apiGroups: [""]
       resources: ["pods"]
-      verbs: ["get", "list", "watch", "delete"]
+      verbs: ["get", "list", "delete"]
     # Namespace read-only permissions
     - apiGroups: [""]
       resources: ["namespaces"]
@@ -98,32 +98,6 @@ resources:
   limits:
     cpu: 500m      # 0.5 CPU core
     memory: 512Mi  # 512 MB memory
-
-# ----------------------------------------
-# Health Check Configuration
-# ----------------------------------------
-livenessProbe:
-  # HTTP health check
-  httpGet:
-    path: /health
-    port: 8080
-  # Start checking 30 seconds after startup
-  initialDelaySeconds: 30
-  # Check interval 10 seconds
-  periodSeconds: 10
-  # Timeout 5 seconds
-  timeoutSeconds: 5
-  # Failure threshold (restart after 3 consecutive failures)
-  failureThreshold: 3
-
-readinessProbe:
-  httpGet:
-    path: /ready
-    port: 8080
-  initialDelaySeconds: 10
-  periodSeconds: 5
-  timeoutSeconds: 3
-  failureThreshold: 3
 
 # ----------------------------------------
 # Scheduling Configuration

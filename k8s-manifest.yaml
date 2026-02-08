@@ -24,7 +24,7 @@ rules:
   # Read pod info (get list, view status)
   - apiGroups: [""]
     resources: ["pods"]
-    verbs: ["get", "list", "watch"]
+    verbs: ["get", "list"]
   # Delete pods (restart unhealthy pods)
   - apiGroups: [""]
     resources: ["pods"]
@@ -92,7 +92,7 @@ spec:
       containers:
         - name: pod-cleaner
           # Image URL (replace with your registry)
-          image: guguji666/pod-cleaner:v2.6
+          image: guguji666/pod-cleaner:latest
           imagePullPolicy: Always
           # Environment variables (REPLACE with your Bark server)
           env:
@@ -153,7 +153,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: pod-cleaner
-              image: guguji666/pod-cleaner:v2.6
+              image: guguji666/pod-cleaner:latest
               imagePullPolicy: Always
               # Environment variables (REPLACE with your Bark server)
               env:

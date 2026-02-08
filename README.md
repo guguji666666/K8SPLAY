@@ -185,7 +185,7 @@ docker run -d \
   -e BARK_BASE_URL="https://your-bark-server.com/DEVICE_KEY" \
   -e BARK_ENABLED="true" \
   -v ~/.kube/config:/root/.kube/config:ro \
-  guguji666/pod-cleaner:v2.6
+  guguji666/pod-cleaner:latest
 ```
 
 **Windows kubeconfig mount example**
@@ -196,7 +196,7 @@ docker run -d ^
   -e BARK_BASE_URL="https://your-bark-server.com/DEVICE_KEY" ^
   -e BARK_ENABLED="true" ^
   -v C:\Users\YOUR_USER\.kube\config:/root/.kube/config:ro ^
-  guguji666/pod-cleaner:v2.6
+  guguji666/pod-cleaner:latest
 ```
 
 ---
@@ -275,7 +275,7 @@ if you want to use existing docker image
 ```bash
 helm install pod-cleaner ./helm/pod-cleaner \
   --set image.repository=guguji666/pod-cleaner \
-  --set image.tag=v2.6 \
+  --set image.tag=latest \
   --set config.barkBaseUrl="https://your-bark-server.com/DEVICE_KEY" \
   --set config.barkEnabled=true \
   --set config.logLevel="INFO"
