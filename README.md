@@ -1,10 +1,3 @@
-# Pod Cleaner — Kubernetes Pod Auto-Cleanup Tool
-
-A lightweight Kubernetes utility that **detects abnormal pods (even when phase is `Running`)** and **forces a restart by deleting the pod** (ReplicaSet/Deployment will recreate it).  
-Optional: send **Bark** notifications with detailed failure reasons.
-
----
-
 ## 🎯 Why Pod Cleaner?
 
 | Pain Point | What Pod Cleaner Does |
@@ -79,52 +72,8 @@ After restarting unhealthy pods, the tool verifies recovery with intelligent pol
 
 ---
 
-## 🚀 Quick Start
-
-### 1) Local Run (Debug)
-
-```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate    # Windows
-
-pip install -r requirements.txt
-
-cp .env.example .env
-# edit .env and set BARK_BASE_URL (optional if you disable Bark)
-source .env
-
-python src/main.py
-````
-
-### Required (if Bark enabled)
-
-You MUST set `BARK_BASE_URL`:
-
-```bash
-# Option A: export env vars
-export BARK_BASE_URL="https://your-bark-server.com/DEVICE_KEY"
-export BARK_ENABLED="true"
-python src/main.py
-
-# Option B: one-liner
-BARK_BASE_URL="https://your-bark-server.com/DEVICE_KEY" \
-BARK_ENABLED="true" \
-python src/main.py
-```
-
-### kubeconfig note
-
-During local debugging, the Kubernetes Python client loads kubeconfig from your machine:
-
-```bash
-kubectl config current-context
-kubectl config view
-```
-
----
-
 ## 🛎️ Bark Notifications (Optional)
+
 ### [Bark github](https://github.com/Finb/bark-server)
 ### [Bark request methods](https://bark.day.app/#/en-us/tutorial?id=request-methods)
 
@@ -165,50 +114,6 @@ docker compose up -d
 curl -X POST "${BARK_BASE_URL}" \
   -H "Content-Type: application/json" \
   -d '{"title":"Test","body":"Pod Cleaner test notification"}'
-```
-
----
-
-## 🐳 Docker Build & Run (Single Instance Testing)
-
-**Goal:** run Pod Cleaner in Docker without Helm/K8s deployment.
-
-### Option A: Build & Run
-
-```bash
-docker build -t pod-cleaner:latest .
-
-docker run -d \
-  --name pod-cleaner \
-  -e BARK_BASE_URL="https://your-bark-server.com/DEVICE_KEY" \
-  -e BARK_ENABLED="true" \
-  -e LOG_LEVEL="INFO" \
-  -v ~/.kube/config:/root/.kube/config:ro \
-  pod-cleaner:latest
-
-docker logs -f pod-cleaner
-```
-
-### Option B: Pre-built Image
-
-```bash
-docker run -d \
-  --name pod-cleaner \
-  -e BARK_BASE_URL="https://your-bark-server.com/DEVICE_KEY" \
-  -e BARK_ENABLED="true" \
-  -v ~/.kube/config:/root/.kube/config:ro \
-  guguji666/pod-cleaner:latest
-```
-
-**Windows kubeconfig mount example**
-
-```bash
-docker run -d ^
-  --name pod-cleaner ^
-  -e BARK_BASE_URL="https://your-bark-server.com/DEVICE_KEY" ^
-  -e BARK_ENABLED="true" ^
-  -v C:\Users\YOUR_USER\.kube\config:/root/.kube/config:ro ^
-  guguji666/pod-cleaner:latest
 ```
 
 ---
@@ -313,64 +218,6 @@ kubectl apply -f k8s-manifest.yaml
 kubectl get pods -l app=pod-cleaner
 kubectl logs -l app=pod-cleaner -f
 ```
-
----
-
-## 📁 Project Structure
-
-```text
-pod-cleaner/
-├── src/
-│   ├── main.py
-│   ├── config.py
-│   ├── kube_client.py
-│   └── notifier.py
-├── Dockerfile
-├── requirements.txt
-├── k8s-manifest.yaml
-├── helm/pod-cleaner/
-│   ├── Chart.yaml
-│   ├── values.yaml
-│   └── templates/
-│       ├── deployment.yaml
-│       ├── rbac.yaml
-│       └── _helpers.tpl
-├── test-detection-logic.py
-├── test-always-failed-pods.yaml
-└── README.md
-```
-
----
-
-## 🧩 Design points
-
-### 1) Large-scale performance
-
-* Pagination (`limit=500`) to reduce API load
-* Skip `kube-system`
-* Optional: label selector narrowing
-* Delete pods one-by-one (lower burst load on apiserver)
-* Recovery verification with polling (early exit on success)
-* Cluster-size aware verification intervals
-
-### 2) Idempotency / Safety
-
-* Deleting a pod is idempotent for ReplicaSet-managed workloads
-* Recovery verification protects against false positives
-* Configurable verification budget per cluster size
-* Dry-run mode support (future)
-
-### 3) Security
-
-* RBAC least privilege (pods: get, list, delete)
-* Namespace exclusions to avoid system impact
-* Non-root container execution
-
-### 4) Observability
-
-* Structured logging for easy parsing
-* Bark notifications for critical alerts
-* Recovery verification status in logs
 
 ---
 
@@ -496,6 +343,108 @@ time.sleep(sleep_time)
 
 ---
 
+## 🧩 Design points
+
+### 1) Large-scale performance
+
+* Pagination (`limit=500`) to reduce API load
+* Skip `kube-system`
+* Optional: label selector narrowing
+* Delete pods one-by-one (lower burst load on apiserver)
+* Recovery verification with polling (early exit on success)
+* Cluster-size aware verification intervals
+
+### 2) Idempotency / Safety
+
+* Deleting a pod is idempotent for ReplicaSet-managed workloads
+* Recovery verification protects against false positives
+* Configurable verification budget per cluster size
+* Dry-run mode support (future)
+
+### 3) Security
+
+* RBAC least privilege (pods: get, list, delete)
+* Namespace exclusions to avoid system impact
+* Non-root container execution
+
+### 4) Observability
+
+* Structured logging for easy parsing
+* Bark notifications for critical alerts
+* Recovery verification status in logs
+
+---
+
+## 📁 Project Structure
+
+```text
+pod-cleaner/
+├── src/
+│   ├── main.py
+│   ├── config.py
+│   ├── kube_client.py
+│   └── notifier.py
+├── Dockerfile
+├── requirements.txt
+├── k8s-manifest.yaml
+├── helm/pod-cleaner/
+│   ├── Chart.yaml
+│   ├── values.yaml
+│   └── templates/
+│       ├── deployment.yaml
+│       ├── rbac.yaml
+│       └── _helpers.tpl
+├── test-detection-logic.py
+├── test-always-failed-pods.yaml
+└── README.md
+```
+
+---
+
+## 🐳 Docker Build & Run (Single Instance Testing)
+
+**Goal:** run Pod Cleaner in Docker without Helm/K8s deployment.
+
+### Option A: Build & Run
+
+```bash
+docker build -t pod-cleaner:latest .
+
+docker run -d \
+  --name pod-cleaner \
+  -e BARK_BASE_URL="https://your-bark-server.com/DEVICE_KEY" \
+  -e BARK_ENABLED="true" \
+  -e LOG_LEVEL="INFO" \
+  -v ~/.kube/config:/root/.kube/config:ro \
+  pod-cleaner:latest
+
+docker logs -f pod-cleaner
+```
+
+### Option B: Pre-built Image
+
+```bash
+docker run -d \
+  --name pod-cleaner \
+  -e BARK_BASE_URL="https://your-bark-server.com/DEVICE_KEY" \
+  -e BARK_ENABLED="true" \
+  -v ~/.kube/config:/root/.kube/config:ro \
+  guguji666/pod-cleaner:latest
+```
+
+**Windows kubeconfig mount example**
+
+```bash
+docker run -d ^
+  --name pod-cleaner ^
+  -e BARK_BASE_URL="https://your-bark-server.com/DEVICE_KEY" ^
+  -e BARK_ENABLED="true" ^
+  -v C:\Users\YOUR_USER\.kube\config:/root/.kube/config:ro ^
+  guguji666/pod-cleaner:latest
+```
+
+---
+
 ## 🐳 Docker Build Files
 
 ```
@@ -574,5 +523,3 @@ rules:
 - [ ] Rate-limited batch operations
 
 ---
-
-
