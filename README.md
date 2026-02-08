@@ -30,20 +30,32 @@ Optional: send **Bark** notifications with detailed failure reasons.
 
 ### Bonus
 - 🛎️ Bark push notifications with detailed context
-- 🔁 Optional “recovery check” after restart (if implemented in code)
+- ✅ Recovery verification with polling (cluster-size aware)
 
 ---
 
-## 🧠 Detection Logic (What counts as “unhealthy”?)
+## 🧠 Detection Logic & Recovery Verification
 
-Pod Cleaner focuses on pods that appear “normal” at a glance but are actually broken:
+### Pod Health Detection
+
+Pod Cleaner focuses on pods that appear "normal" at a glance but are actually broken:
 
 - Pod in `Running`/`Init` **but** container state is:
   - `waiting` with reasons like `CrashLoopBackOff`, `ImagePullBackOff`, etc.
   - `terminated` with non-zero exit code
-- Restart count spikes / repeated abnormal states (based on your logic)
 
-> This avoids the common trap: **phase == Running** doesn’t mean the container is healthy.
+### Recovery Verification (Bonus)
+
+After restarting unhealthy pods, the tool verifies recovery with intelligent polling:
+
+- **Polling with early exit**: Stops checking once all pods recover
+- **Cluster-size awareness**:
+  - SMALL (≤50 namespaces): 180s budget, 30s interval
+  - MEDIUM (≤200 namespaces): 150s budget, 30s interval
+  - LARGE (>200 namespaces): 120s budget, 60s interval
+- **Budget protection**: Maximum verification time prevents schedule overruns
+
+> This avoids the common trap: **phase == Running** doesn't mean the container is healthy.
 
 ---
 
@@ -338,34 +350,48 @@ pod-cleaner/
 * Skip `kube-system`
 * Optional: label selector narrowing
 * Delete pods one-by-one (lower burst load on apiserver)
-* Advanced idea: watch mode instead of polling
+* Recovery verification with polling (early exit on success)
+* Cluster-size aware verification intervals
 
 ### 2) Idempotency / Safety
 
 * Deleting a pod is idempotent for ReplicaSet-managed workloads
-* Avoid cleaning the same pod repeatedly by tracking run state (if implemented)
-* Optional: support dry-run mode in future
+* Recovery verification protects against false positives
+* Configurable verification budget per cluster size
+* Dry-run mode support (future)
 
 ### 3) Security
 
-* RBAC least privilege
-* Never delete across all namespaces blindly
+* RBAC least privilege (pods: get, list, delete)
 * Namespace exclusions to avoid system impact
+* Non-root container execution
+
+### 4) Observability
+
+* Structured logging for easy parsing
+* Bark notifications for critical alerts
+* Recovery verification status in logs
 
 ---
 
 ## 🗺️ Roadmap for improvement in future 
 
-* [ ] Slack webhook notifications
-* [ ] Email (SMTP) notifications
-* [ ] DingTalk webhook
-* [ ] Severity-based routing
-* [ ] Retry / backoff for notifications
-* [ ] Prometheus metrics
-* [ ] Health endpoints (`/health`, `/ready`)
-* [ ] JSON structured logs
-* [ ] Whitelist / namespace filter
-* [ ] Rate-limited batch operations
+### Completed ✅
+- ✅ Recovery verification with polling
+- ✅ Cluster-size awareness
+- ✅ Structured logging
+
+### Planned
+- [ ] Slack webhook notifications
+- [ ] Email (SMTP) notifications
+- [ ] DingTalk webhook
+- [ ] Severity-based routing
+- [ ] Retry / backoff for notifications
+- [ ] Prometheus metrics
+- [ ] Health endpoints (`/health`, `/ready`)
+- [ ] JSON structured logs
+- [ ] Namespace whitelist filter
+- [ ] Rate-limited batch operations
 
 ---
 
