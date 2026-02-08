@@ -1,0 +1,359 @@
+# Test Failure Pods Deployment
+# Creates pods with various failure patterns for testing pod-cleaner detection
+#
+# FAILURE SCENARIOS:
+# 1. CrashLoopBackOff: Container exits immediately, restarts repeatedly
+# 2. ErrorExit: Container runs for 30s then exits with code 1
+# 3. InitContainerFailure: Init container fails, main container never starts
+# 4. MultipleContainersMixed: One healthy + one failing container in same pod
+#
+# USAGE:
+# kubectl apply -f test-failure-pods.yaml
+# kubectl get pods -n test-failures -w
+#
+# EXPECTED STATES TO OBSERVE:
+# - CrashLoopBackOff: STATUS=CrashLoopBackOff, RESTARTS=increasing
+# - ErrorExit: STATUS=Running, but CONTAINER STATUSES show ExitCode=1
+# - InitContainerFailed: STATUS=Init:Error or Init:CrashLoopBackOff
+# - RunningButUnhealthy: STATUS=Running, but container is actually failed
+
+---
+# Namespace for test pods
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-failures
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: failure-simulation
+
+---
+# Deployment 1: CrashLoopBackOff (most common failure)
+# Container exits immediately with code 1, Kubernetes keeps restarting it
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crashloop-pod
+  namespace: test-failures
+  labels:
+    app: crashloop-pod
+    failure-type: crashloop
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: crashloop-pod
+  template:
+    metadata:
+      labels:
+        app: crashloop-pod
+        failure-type: crashloop
+    spec:
+      containers:
+      - name: crashloop
+        image: alpine:latest
+        # Command that exits immediately with error code 1
+        # Kubernetes will restart it, causing CrashLoopBackOff
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Container started at $(date)"
+            echo "Exiting with code 1 (will cause CrashLoopBackOff)..."
+            exit 1
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "64Mi"
+
+---
+# Deployment 2: ErrorExit (runs briefly then fails)
+# Container runs for 30 seconds then exits with code 1
+# Pod phase will be Running, but container is unhealthy
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: error-exit-pod
+  namespace: test-failures
+  labels:
+    app: error-exit-pod
+    failure-type: error-exit
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: error-exit-pod
+  template:
+    metadata:
+      labels:
+        app: error-exit-pod
+        failure-type: error-exit
+    spec:
+      containers:
+      - name: error-exit
+        image: alpine:latest
+        # Run for 30 seconds, then exit with code 1
+        # Pod phase = Running, but container eventually terminates with error
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Container started at $(date)"
+            echo "Will run for 30 seconds..."
+            sleep 30
+            echo "Exiting with code 1 at $(date)"
+            exit 1
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "64Mi"
+
+---
+# Deployment 3: InitContainerFailure
+# Init container fails, main container never starts
+# Pod status will show Init:Error or Init:CrashLoopBackOff
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: init-failure-pod
+  namespace: test-failures
+  labels:
+    app: init-failure-pod
+    failure-type: init-failure
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: init-failure-pod
+  template:
+    metadata:
+      labels:
+        app: init-failure-pod
+        failure-type: init-failure
+    spec:
+      # Init container that fails immediately
+      initContainers:
+      - name: init-fail
+        image: alpine:latest
+        # Init container exits with code 1
+        # Main container will never start
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Init container started at $(date)"
+            echo "Init container failing intentionally..."
+            exit 1
+      containers:
+      - name: main
+        image: alpine:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Main container started (you should never see this)"
+            sleep 3600
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "64Mi"
+
+---
+# Deployment 4: Mixed Healthy + Failing Containers
+# One container healthy, one container failing
+# This tests pod-cleaner's container-level health check
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mixed-pod
+  namespace: test-failures
+  labels:
+    app: mixed-pod
+    failure-type: mixed
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mixed-pod
+  template:
+    metadata:
+      labels:
+        app: mixed-pod
+        failure-type: mixed
+    spec:
+      containers:
+      # Container 1: Healthy (runs forever)
+      - name: healthy
+        image: alpine:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Healthy container running..."
+            sleep 3600
+      # Container 2: Failing (crash after 10 seconds)
+      - name: failing
+        image: alpine:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Failing container starting..."
+            sleep 10
+            echo "Failing container exiting with code 1!"
+            exit 1
+      resources:
+        limits:
+          cpu: "100m"
+          memory: "64Mi"
+
+---
+# Deployment 5: ImagePullBackOff (simulated)
+# Use a non-existent image to trigger ImagePullBackOff
+# Note: This will stay in Pending state forever
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-pull-fail-pod
+  namespace: test-failures
+  labels:
+    app: image-pull-fail-pod
+    failure-type: image-pull-fail
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: image-pull-fail-pod
+  template:
+    metadata:
+      labels:
+        app: image-pull-fail-pod
+        failure-type: image-pull-fail
+    spec:
+      containers:
+      - name: image-pull-fail
+        # Non-existent image will cause ImagePullBackOff
+        image: non-existent-registry.example.com/fake-image:v1.0
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "64Mi"
+
+---
+# 6: OOMK Deploymentilled Simulation
+# Container uses too much memory and gets killed
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oom-pod
+  namespace: test-failures
+  labels:
+    app: oom-pod
+    failure-type: oom
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: oom-pod
+  template:
+    metadata:
+      labels:
+        app: oom-pod
+        failure-type: oom
+    spec:
+      containers:
+      - name: oom
+        image: alpine:latest
+        # Allocate memory until OOM killed
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Starting memory allocation..."
+            # Try to use 100MB memory, will be OOM killed
+            i=0
+            while [ $i -lt 100 ]; do
+              echo "Allocating 1MB... ($i/100)"
+              dd if=/dev/zero of=/tmp/memory bs=1M count=1 2>/dev/null
+              i=$((i + 1))
+            done
+            echo "Should not reach here"
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "64Mi"  # Very low limit to trigger OOM
+
+---
+# Service for healthy access (if any pods recover)
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-failures-service
+  namespace: test-failures
+spec:
+  selector:
+    app: crashloop-pod  # Just select one type
+  ports:
+  - port: 80
+    targetPort: 80
+  clusterIP: None  # Headless service
+
+---
+# ConfigMap with test instructions
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-instructions
+  namespace: test-failures
+data:
+  README: |
+    # Test Failure Pods - Instructions
+
+    ## Created Resources
+
+    ### Deployments
+    1. crashloop-pod (2 replicas)
+       - Failure: CrashLoopBackOff
+       - Behavior: Exits immediately, restarts repeatedly
+
+    2. error-exit-pod (2 replicas)
+       - Failure: ErrorExit
+       - Behavior: Runs 30s, then exits with code 1
+
+    3. init-failure-pod (1 replica)
+       - Failure: InitContainerFailure
+       - Behavior: Init container fails, main never starts
+
+    4. mixed-pod (2 replicas)
+       - Failure: Mixed (one healthy + one failing container)
+       - Behavior: Pod phase = Running, but one container fails
+
+    5. image-pull-fail-pod (1 replica)
+       - Failure: ImagePullBackOff
+       - Behavior: Image doesn't exist, stays in Pending
+
+    6. oom-pod (1 replica)
+       - Failure: OOMKilled
+       - Behavior: Memory limit exceeded, killed by OOM
+
+    ## Observation Commands
+
+    # Watch all pods
+    kubectl get pods -n test-failures -w
+
+    # Watch specific pod type
+    kubectl get pods -n test-failures -l failure-type=crashloop -w
+
+    # Describe pod for details
+    kubectl describe pod <pod-name> -n test-failures
+
+    # Check pod events
+    kubectl get events -n test-failures --sort-by='.lastTimestamp'
+
+    ## Expected States
+
+    | Pod Type | Expected Status | Restart Count |
+    |----------|----------------|---------------|
+    | crashloop | CrashLoopBackOff | Increasing |
+    | error-exit | Running → Error | 0 → 1+ |
+    | init-failure | Init:Error | 1+ |
+    | mixed | Running | 0+ (varies) |
+    | image-pull-fail | Pending/ImagePullBackOff | 0 |
+    | oom | Error/OOMKilled | 1+ |
+
+    ## Cleanup
+
+    kubectl delete -f test-failure-pods.yaml
