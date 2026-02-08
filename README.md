@@ -376,29 +376,60 @@ pod-cleaner/
 
 ## 🏗️ Architecture & Implementation
 
-### Runtime Data Flow
+### Main Loop Flow Chart
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           main.py (Entry Point)                         │
-└─────────────────────────┬───────────────────────────────────────────────┘
-                          │
-          ┌───────────────┼───────────────┬───────────────┐
-          ▼               ▼               ▼               ▼
-    ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐
-    │  config  │  │   kube   │  │  notifier │  │ logging   │
-    │           │  │  client  │  │           │  │           │
-    └───────────┘  └───────────┘  └───────────┘  └───────────┘
-          │               │               │
-          │               │               │
-          └───────────────┴───────────────┘
-                          │
-                          ▼
-              ┌───────────────────────┐
-              │  Kubernetes API      │
-              │  Bark Server         │
-              └───────────────────────┘
+main.py
+│
+├── main()                                # Program entry point
+│   │
+│   ├── setup_logging()                  # Initialize logging system
+│   │
+│   ├── KubernetesClient()               # Initialize K8s API client
+│   │   └── load_incluster_config()      # Use Pod ServiceAccount for auth
+│   │
+│   ├── BarkNotifier()                   # Initialize notification module
+│   │   └── Config.get_bark_base_url()   # Read Bark push URL from config
+│   │
+│   └── while True:                      # Main daemon loop
+│       │
+│       ├── get_all_namespaces()          # Fetch all cluster namespaces
+│       │
+│       ├── find_unhealthy_pods()       # Core detection logic
+│       │   │
+│       │   ├── should_skip_namespace()   # Exclude system namespaces (kube-system)
+│       │   │
+│       │   ├── is_pod_healthy()        # Pod phase screening (Running/Init/Succeeded)
+│       │   │
+│       │   └── check container state    # Container real status check
+│       │       ├── waiting              # CrashLoopBackOff / ImagePullBackOff
+│       │       └── terminated(exit!=0)  # Abnormal exit with non-zero code
+│       │
+│       ├── restart_pods()                # Batch self-healing (delete pods)
+│       │   └── delete_pod()            # Call K8s API to delete single pod
+│       │
+│       ├── send_cleanup_report()        # Send cleanup execution report
+│       │
+│       ├── wait_for_pods_ready()       # Wait + recovery confirmation (Bonus)
+│       │
+│       └── send_alert()                 # Alert if pods still unhealthy
+│
+└── sleep(RUN_INTERVAL_SECONDS)           # Wait before next cycle
 ```
+
+### Key Processing Steps
+
+| Step | Function | Purpose |
+|------|----------|---------|
+| 1 | `get_all_namespaces()` | List all namespaces to inspect |
+| 2 | `find_unhealthy_pods()` | Detect pods needing restart |
+| 3 | `restart_pods()` | Delete unhealthy pods (trigger ReplicaSet recreation) |
+| 4 | `send_cleanup_report()` | Notify cleanup summary |
+| 5 | `wait_for_pods_ready()` | Verify recovery with polling |
+| 6 | `send_alert()` | Alert if still unhealthy |
+| 7 | `sleep()` | Maintain 10-minute cadence |
+
+
 
 ### Implementation Details
 

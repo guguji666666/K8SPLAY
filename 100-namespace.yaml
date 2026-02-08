@@ -1,0 +1,1006 @@
+# 100 Namespaces Manifest
+# This file creates 100 unique namespaces for testing pod-cleaner
+# Usage: kubectl apply -f 100-namespace.yaml
+#
+# Namespace naming convention: test-{number:03d}
+# Example: test-001, test-002, ... test-100
+
+---
+# Namespace 1
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-001
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 2
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-002
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 3
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-003
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 4
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-004
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 5
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-005
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 6
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-006
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 7
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-007
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 8
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-008
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 9
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-009
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 10
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-010
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 11
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-011
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 12
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-012
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 13
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-013
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 14
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-014
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 15
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-015
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 16
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-016
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 17
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-017
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 18
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-018
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 19
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-019
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 20
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-020
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 21
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-021
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 22
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-022
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 23
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-023
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 24
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-024
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 25
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-025
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 26
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-026
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 27
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-027
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 28
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-028
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 29
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-029
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 30
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-030
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 31
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-031
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 32
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-032
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 33
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-033
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 34
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-034
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 35
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-035
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 36
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-036
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 37
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-037
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 38
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-038
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 39
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-039
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 40
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-040
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 41
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-041
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 42
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-042
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 43
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-043
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 44
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-044
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 45
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-045
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 46
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-046
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 47
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-047
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 48
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-048
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 49
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-049
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 50
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-050
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 51
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-051
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 52
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-052
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 53
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-053
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 54
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-054
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 55
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-055
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 56
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-056
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 57
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-057
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 58
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-058
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 59
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-059
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 60
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-060
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 61
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-061
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 62
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-062
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 63
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-063
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 64
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-064
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 65
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-065
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 66
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-066
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 67
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-067
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 68
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-068
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 69
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-069
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 70
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-070
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 71
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-071
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 72
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-072
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 73
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-073
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 74
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-074
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 75
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-075
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 76
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-076
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 77
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-077
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 78
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-078
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 79
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-079
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 80
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-080
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 81
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-081
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 82
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-082
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 83
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-083
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 84
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-084
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 85
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-085
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 86
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-086
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 87
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-087
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 88
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-088
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 89
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-089
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 90
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-090
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 91
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-091
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 92
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-092
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 93
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-093
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 94
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-094
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 95
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-095
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 96
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-096
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 97
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-097
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 98
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-098
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 99
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-099
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
+
+---
+# Namespace 100
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-100
+  labels:
+    purpose: pod-cleaner-testing
+    test-type: automated
