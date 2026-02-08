@@ -374,6 +374,155 @@ pod-cleaner/
 
 ---
 
+## 🏗️ Architecture & Implementation
+
+### Runtime Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           main.py (Entry Point)                         │
+└─────────────────────────┬───────────────────────────────────────────────┘
+                          │
+          ┌───────────────┼───────────────┬───────────────┐
+          ▼               ▼               ▼               ▼
+    ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐
+    │  config  │  │   kube   │  │  notifier │  │ logging   │
+    │           │  │  client  │  │           │  │           │
+    └───────────┘  └───────────┘  └───────────┘  └───────────┘
+          │               │               │
+          │               │               │
+          └───────────────┴───────────────┘
+                          │
+                          ▼
+              ┌───────────────────────┐
+              │  Kubernetes API      │
+              │  Bark Server         │
+              └───────────────────────┘
+```
+
+### Implementation Details
+
+| Feature | Location | Key Code |
+|---------|----------|-----------|
+| **Pagination** | `src/kube_client.py:88-117` | `list_namespaced_pod(limit=500)` |
+| **Skip kube-system** | `src/config.py:29` | `EXCLUDED_NAMESPACES = ["kube-system"]` |
+| **Idempotency** | `src/main.py:76-127` | Re-check status every cycle |
+| **RBAC Least Privilege** | `k8s-manifest.yaml:23-35` | `verbs: ["get","list","delete"]` |
+| **ServiceAccount** | `k8s-manifest.yaml:8-15` | `serviceAccountName: pod-cleaner-sa` |
+| **NonRoot** | `k8s-manifest.yaml:87-90` | `runAsUser: 1000`, `runAsNonRoot: true` |
+| **Graceful Restart** | `src/kube_client.py:256-259` | `grace_period_seconds=0` |
+| **10min Interval** | `src/config.py:41` | `RUN_INTERVAL_SECONDS = 600` |
+
+### Code Highlights
+
+#### 1) Pagination (kube_client.py)
+
+```python
+# Each API call returns max 500 pods
+# Loop continues while _continue token exists
+while True:
+    resp = self.api.list_namespaced_pod(
+        namespace=namespace,
+        limit=500,
+        _continue=continue_token  #下一页的凭证
+    )
+    all_pods.extend(resp.items)
+    continue_token = resp.metadata._continue
+    if not continue_token:
+        break  # No more pages
+```
+
+#### 2) Skip kube-system (config.py)
+
+```python
+class Config:
+    EXCLUDED_NAMESPACES = ["kube-system"]  # Don't touch system pods!
+
+def should_skip_namespace(namespace: str) -> bool:
+    return namespace in Config.EXCLUDED_NAMESPACES
+```
+
+#### 3) Restart with RBAC (kube_client.py)
+
+```python
+def delete_pod(self, namespace: str, pod_name: str) -> bool:
+    # RBAC: requires "delete" permission on "pods" resource
+    self.api.delete_namespaced_pod(
+        name=pod_name,
+        namespace=namespace,
+        grace_period_seconds=0  # Immediate restart
+    )
+```
+
+#### 4) 10-Minute Scheduler (main.py)
+
+```python
+# Calculate sleep to maintain 10-minute cadence
+elapsed = (datetime.now() - run_start_time).total_seconds()
+sleep_time = max(0, Config.RUN_INTERVAL_SECONDS - elapsed)
+time.sleep(sleep_time)
+```
+
+---
+
+## 🐳 Docker Build Files
+
+```
+Files used during Docker build:
+├── requirements.txt   → Installed via pip
+├── Dockerfile         → Build instructions
+└── src/              → Copied into image
+    ├── main.py
+    ├── config.py
+    ├── kube_client.py
+    └── notifier.py
+
+Files NOT in image:
+├── k8s-manifest.yaml  → kubectl apply -f (not in container)
+├── helm/              → helm install (not in container)
+├── README.md          → Documentation only
+└── test-*.py          → Testing tools only
+```
+
+### RBAC Permissions Summary
+
+```yaml
+# pod-cleaner-clusterrole (k8s-manifest.yaml)
+rules:
+# Pod operations
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]     # Read pod status
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["delete"]          # Restart pods
+
+# Namespace read
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list"]
+
+# NOT granted (security):
+# - create/update/patch → Can't create new pods
+# - exec → Can't enter containers
+# - secrets/configmaps → Can't access sensitive data
+```
+
+### Key Design Decisions
+
+| Decision | Reason |
+|----------|--------|
+| Delete instead of restart | K8s has no "restart" API; deleting triggers ReplicaSet recreation |
+| grace_period_seconds=0 | CrashLoopBackOff pods won't recover; force immediate restart |
+| Skip kube-system | System pods (etcd, API server) must never be deleted |
+| Pagination limit=500 | Balances API load vs single-request timeout |
+| Cluster-size aware polling | Large clusters need longer budgets, longer intervals |
+
+---
+
+
+---
+
 ## 🗺️ Roadmap for improvement in future 
 
 ### Completed ✅
