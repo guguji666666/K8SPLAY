@@ -1,0 +1,180 @@
+# Bark Server - Kubernetes Deployment
+# Self-hosted iOS push notification service
+#
+# FEATURES:
+# - Sends push notifications to iOS devices
+# - Simple HTTP API (POST to /push)
+# - Self-hosted, privacy-safe
+#
+# USAGE:
+# 1. kubectl apply -f bark-server.yaml
+# 2. Get device key from bark logs
+# 3. Configure pod-cleaner to use this server
+#
+# API FORMAT:
+# POST http://<bark-service>:<port>/<device-key>/push
+# Body: {"title": "Title", "body": "Message", "level": "active"}
+
+---
+# Namespace for bark server
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bark
+  labels:
+    app: bark-server
+
+---
+# Storage (PersistentVolumeClaim for bark data)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bark-pvc
+  namespace: bark
+  labels:
+    app: bark-server
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bark
+  namespace: bark
+  labels:
+    app: bark-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bark-server
+  template:
+    metadata:
+      labels:
+        app: bark-server
+    spec:
+      containers:
+      - name: bark
+        image: finab/bark-server:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: BARK_SERVER_PORT
+          value: "8080"
+        - name: BARK_ARCHIVE
+          value: "true"
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        volumeMounts:
+        - name: bark-data
+          mountPath: /data
+      volumes:
+      - name: bark-data
+        persistentVolumeClaim:
+          claimName: bark-pvc
+
+---
+# Service (ClusterIP - internal access only)
+apiVersion: v1
+kind: Service
+metadata:
+  name: bark
+  namespace: bark
+  labels:
+    app: bark-server
+spec:
+  type: ClusterIP
+  selector:
+    app: bark-server
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+
+---
+# Ingress (optional - for external access)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bark-ingress
+  namespace: bark
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - host: bark.your-domain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bark
+            port:
+              number: 8080
+
+---
+# Quick Test Command (after deployment)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bark-test-commands
+  namespace: default
+data:
+  test-notification: |
+    # Test bark server (replace DEVICE_KEY with actual key)
+    curl -X POST "http://bark:8080/DEVICE_KEY/push" \
+      -H "Content-Type: application/json" \
+      -d '{"title":"Test","body":"Pod Cleaner test notification"}'
+
+---
+# README
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bark-readme
+  namespace: bark
+data:
+  README: |
+    # Bark Server Deployment
+    
+    ## Access Methods
+    
+    ### Internal (within cluster)
+    http://bark:8080/DEVICE_KEY/push
+    
+    ### External (with Ingress)
+    http://bark.your-domain.com/DEVICE_KEY/push
+    
+    ## Get Device Key
+    
+    ```bash
+    # Check bark logs for device registration URL
+    kubectl logs -n bark -l app=bark-server -f
+    ```
+    
+    ## Pod Cleaner Configuration
+    
+    ```bash
+    # Set Bark URL to internal service
+    BARK_BASE_URL="http://bark:8080/DEVICE_KEY"
+    ```
+    
+    ## Cleanup
+    
+    ```bash
+    kubectl delete -f bark-server.yaml
+    ```

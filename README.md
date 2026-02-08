@@ -108,6 +108,45 @@ docker compose up -d
 # then open: http://localhost:8080 to get your device key
 ```
 
+### Self-host Bark Server (Kubernetes) for production
+
+For production deployments, deploy Bark server to Kubernetes using the provided manifest:
+
+```bash
+# Deploy Bark server to Kubernetes
+kubectl apply -f bark-server.yaml
+
+# Check deployment status
+kubectl get deployment bark-server
+kubectl get svc bark-server
+
+# Get external IP or NodePort to access the Bark UI
+kubectl get svc bark-server -o jsonpath='{.spec.ports[0].nodePort}'
+```
+
+**Expected output:**
+```
+NAME           READY   UP-TO-DATE   AVAILABLE   AGE
+bark-server    1/1     1            1           30s
+
+NAME           TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+bark-server    NodePort   10.96.XXX.XXX   <none>        8080:30080/TCP   30s
+```
+
+**Access Bark UI:**
+- If using NodePort: `http://<node-ip>:30080`
+- If using LoadBalancer: `http://<loadbalancer-ip>:8080`
+
+**Get device key:**
+1. Open Bark UI in browser
+2. Register device to get your device key
+3. Use the key in `BARK_BASE_URL`
+
+**Cleanup:**
+```bash
+kubectl delete -f bark-server.yaml
+```
+
 ### Quick test
 
 ```bash
@@ -153,7 +192,39 @@ screenshot for Step 5: trigger notifications if some pods still failed to start 
 <img width="1206" height="2622" alt="image" src="https://github.com/user-attachments/assets/f04a327e-3254-4da8-a6d1-af02485acccb" />
 
 
-### 2) `test-failure-pods.yaml` — Failure Simulation Pods
+### 2) `100-namespace.yaml` — Cluster Scale Simulation
+
+Creates 100 test namespaces (`test-001` to `test-100`) to simulate cluster scale testing. Each namespace contains a simple nginx deployment.
+
+**Purpose:** Test pod-cleaner performance and behavior under large-scale cluster conditions.
+
+```bash
+# Deploy 100 namespaces with nginx
+kubectl apply -f 100-namespace.yaml
+
+# Verify namespaces created
+kubectl get ns | grep test- | head -20
+# Expected: test-001, test-002, ... test-100
+
+# Check pod distribution
+kubectl get pods -n test-001  # Should show nginx deployment
+
+# Cleanup
+kubectl delete -f 100-namespace.yaml
+```
+
+**Expected observations:**
+
+| Metric | Expected Value |
+|--------|---------------|
+| Namespace count | 100 (test-001 to test-100) |
+| Pods per namespace | 1 nginx pod |
+| Total pods | 100 nginx pods |
+| Detection time | ~30-60s (depends on cluster size) |
+
+---
+
+### 3) `test-failure-pods.yaml` — Failure Simulation Pods
 
 Creates 6 types of failing pods for testing pod-cleaner detection:
 
