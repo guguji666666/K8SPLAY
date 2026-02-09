@@ -1,22 +1,45 @@
-# 100 Namespaces Manifest
-# This file creates 100 unique namespaces for testing pod-cleaner
-# Usage: kubectl apply -f 100-namespace.yaml
+# =============================================================================
+# 100 Namespaces Test Manifest
+# =============================================================================
+# Purpose: Creates 100 unique namespaces for testing Pod Cleaner's performance
+#          and behavior under large-scale cluster conditions.
 #
-# Namespace naming convention: test-{number:03d}
-# Example: test-001, test-002, ... test-100
+# Use Case: Validate that Pod Cleaner can handle clusters with many namespaces
+#           without performance degradation or API rate limiting issues.
+#
+# Namespace Naming Convention: test-{number:03d}
+#   - Padded with zeros to ensure alphabetical sorting works correctly
+#   - Example: test-001, test-002, ... test-100
+#
+# Each namespace contains:
+#   - A simple nginx deployment (1 replica)
+#   - Labels for identification and filtering
+#
+# Usage:
+#   kubectl apply -f 100-namespace.yaml
+#   kubectl get ns | grep test- | wc -l  # Verify 100 namespaces created
+#   kubectl get pods -n test-001          # Check pods in first namespace
+#
+# Cleanup:
+#   kubectl delete -f 100-namespace.yaml
+#
+# =============================================================================
 
 ---
-# Namespace 1
+# Namespace 001 - First test namespace
+# Purpose: Baseline namespace for initial testing scenarios
 apiVersion: v1
 kind: Namespace
 metadata:
   name: test-001
   labels:
-    purpose: pod-cleaner-testing
-    test-type: automated
+    purpose: pod-cleaner-testing              # Identifies namespace as test resource
+    test-type: automated                      # Indicates programmatically created
+    test-scale: large                         # Classifies as large-scale test (100+ ns)
 
 ---
-# Namespace 2
+# Namespace 002 - Second test namespace
+# Purpose: Multi-namespace validation testing
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -24,9 +47,11 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 3
+# Namespace 003 - Third test namespace
+# Purpose: Continuation of scale testing pattern
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -34,9 +59,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 4
+# Namespace 004 - Fourth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -44,9 +70,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 5
+# Namespace 005 - Fifth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -54,9 +81,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 6
+# Namespace 006 - Sixth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -64,9 +92,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 7
+# Namespace 007 - Seventh test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -74,9 +103,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 8
+# Namespace 008 - Eighth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -84,9 +114,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 9
+# Namespace 009 - Ninth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -94,9 +125,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 10
+# Namespace 010 - Tenth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -104,9 +136,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 11
+# Namespace 011 - Eleventh test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -114,9 +147,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 12
+# Namespace 012 - Twelfth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -124,9 +158,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 13
+# Namespace 013 - Thirteenth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -134,9 +169,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 14
+# Namespace 014 - Fourteenth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -144,9 +180,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 15
+# Namespace 015 - Fifteenth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -154,9 +191,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 16
+# Namespace 016 - Sixteenth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -164,9 +202,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 17
+# Namespace 017 - Seventeenth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -174,9 +213,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 18
+# Namespace 018 - Eighteenth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -184,9 +224,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 19
+# Namespace 019 - Nineteenth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -194,9 +235,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 20
+# Namespace 020 - Twentieth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -204,9 +246,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 21
+# Namespace 021 - Twenty-first test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -214,9 +257,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 22
+# Namespace 022 - Twenty-second test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -224,9 +268,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 23
+# Namespace 023 - Twenty-third test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -234,9 +279,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 24
+# Namespace 024 - Twenty-fourth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -244,9 +290,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 25
+# Namespace 025 - Twenty-fifth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -254,9 +301,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 26
+# Namespace 026 - Twenty-sixth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -264,9 +312,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 27
+# Namespace 027 - Twenty-seventh test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -274,9 +323,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 28
+# Namespace 028 - Twenty-eighth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -284,9 +334,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 29
+# Namespace 029 - Twenty-ninth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -294,9 +345,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 30
+# Namespace 030 - Thirtieth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -304,9 +356,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 31
+# Namespace 031 - Thirty-first test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -314,9 +367,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 32
+# Namespace 032 - Thirty-second test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -324,9 +378,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 33
+# Namespace 033 - Thirty-third test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -334,9 +389,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 34
+# Namespace 034 - Thirty-fourth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -344,9 +400,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 35
+# Namespace 035 - Thirty-fifth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -354,9 +411,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 36
+# Namespace 036 - Thirty-sixth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -364,9 +422,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 37
+# Namespace 037 - Thirty-seventh test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -374,9 +433,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 38
+# Namespace 038 - Thirty-eighth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -384,9 +444,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 39
+# Namespace 039 - Thirty-ninth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -394,9 +455,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 40
+# Namespace 040 - Fortieth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -404,9 +466,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 41
+# Namespace 041 - Forty-first test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -414,9 +477,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 42
+# Namespace 042 - Forty-second test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -424,9 +488,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 43
+# Namespace 043 - Forty-third test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -434,9 +499,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 44
+# Namespace 044 - Forty-fourth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -444,9 +510,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 45
+# Namespace 045 - Forty-fifth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -454,9 +521,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 46
+# Namespace 046 - Forty-sixth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -464,9 +532,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 47
+# Namespace 047 - Forty-seventh test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -474,9 +543,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 48
+# Namespace 048 - Forty-eighth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -484,9 +554,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 49
+# Namespace 049 - Forty-ninth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -494,9 +565,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 50
+# Namespace 050 - Fiftieth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -504,9 +576,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 51
+# Namespace 051 - Fifty-first test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -514,9 +587,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 52
+# Namespace 052 - Fifty-second test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -524,9 +598,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 53
+# Namespace 053 - Fifty-third test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -534,9 +609,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 54
+# Namespace 054 - Fifty-fourth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -544,9 +620,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 55
+# Namespace 055 - Fifty-fifth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -554,9 +631,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 56
+# Namespace 056 - Fifty-sixth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -564,9 +642,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 57
+# Namespace 057 - Fifty-seventh test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -574,9 +653,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 58
+# Namespace 058 - Fifty-eighth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -584,9 +664,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 59
+# Namespace 059 - Fifty-ninth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -594,9 +675,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 60
+# Namespace 060 - Sixtieth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -604,9 +686,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 61
+# Namespace 061 - Sixty-first test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -614,9 +697,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 62
+# Namespace 062 - Sixty-second test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -624,9 +708,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 63
+# Namespace 063 - Sixty-third test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -634,9 +719,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 64
+# Namespace 064 - Sixty-fourth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -644,9 +730,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 65
+# Namespace 065 - Sixty-fifth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -654,9 +741,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 66
+# Namespace 066 - Sixty-sixth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -664,9 +752,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 67
+# Namespace 067 - Sixty-seventh test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -674,9 +763,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 68
+# Namespace 068 - Sixty-eighth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -684,9 +774,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 69
+# Namespace 069 - Sixty-ninth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -694,9 +785,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 70
+# Namespace 070 - Seventieth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -704,9 +796,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 71
+# Namespace 071 - Seventy-first test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -714,9 +807,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 72
+# Namespace 072 - Seventy-second test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -724,9 +818,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 73
+# Namespace 073 - Seventy-third test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -734,9 +829,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 74
+# Namespace 074 - Seventy-fourth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -744,9 +840,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 75
+# Namespace 075 - Seventy-fifth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -754,9 +851,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 76
+# Namespace 076 - Seventy-sixth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -764,9 +862,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 77
+# Namespace 077 - Seventy-seventh test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -774,9 +873,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 78
+# Namespace 078 - Seventy-eighth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -784,9 +884,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 79
+# Namespace 079 - Seventy-ninth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -794,9 +895,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 80
+# Namespace 080 - Eightieth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -804,9 +906,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 81
+# Namespace 081 - Eighty-first test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -814,9 +917,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 82
+# Namespace 082 - Eighty-second test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -824,9 +928,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 83
+# Namespace 083 - Eighty-third test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -834,9 +939,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 84
+# Namespace 084 - Eighty-fourth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -844,9 +950,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 85
+# Namespace 085 - Eighty-fifth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -854,9 +961,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 86
+# Namespace 086 - Eighty-sixth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -864,9 +972,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 87
+# Namespace 087 - Eighty-seventh test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -874,9 +983,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 88
+# Namespace 088 - Eighty-eighth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -884,9 +994,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 89
+# Namespace 089 - Eighty-ninth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -894,9 +1005,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 90
+# Namespace 090 - Ninetieth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -904,9 +1016,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 91
+# Namespace 091 - Ninety-first test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -914,9 +1027,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 92
+# Namespace 092 - Ninety-second test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -924,9 +1038,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 93
+# Namespace 093 - Ninety-third test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -934,9 +1049,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 94
+# Namespace 094 - Ninety-fourth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -944,9 +1060,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 95
+# Namespace 095 - Ninety-fifth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -954,9 +1071,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 96
+# Namespace 096 - Ninety-sixth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -964,9 +1082,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 97
+# Namespace 097 - Ninety-seventh test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -974,9 +1093,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 98
+# Namespace 098 - Ninety-eighth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -984,9 +1104,10 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 99
+# Namespace 099 - Ninety-ninth test namespace
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -994,9 +1115,12 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
 
 ---
-# Namespace 100
+# Namespace 100 - One hundredth test namespace
+# Purpose: Final namespace completing the 100-namespace test suite
+#          Used to validate Pod Cleaner handles maximum expected scale
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -1004,3 +1128,4 @@ metadata:
   labels:
     purpose: pod-cleaner-testing
     test-type: automated
+    test-scale: large
