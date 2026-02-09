@@ -164,14 +164,14 @@ class KubernetesClient:
             # Uses ServiceAccount mounted at standard path
             config.load_incluster_config()
             print("✅ Using in-cluster config")
-            
+
         except config.ConfigException:
             # ConfigException means we're not running in Kubernetes
             # Fall back to local kubeconfig for development
             try:
                 config.load_kube_config()
                 print("WARNING Using local kubeconfig (debug mode)")
-                
+
             except Exception as e:
                 # If both methods fail, raise an error
                 # This prevents the program from running without K8s access
@@ -218,12 +218,12 @@ class KubernetesClient:
         try:
             # Call Kubernetes API to list all namespaces
             namespaces = self.api.list_namespace()
-            
+
             # Extract just the names using list comprehension
             # [ns.metadata.name for ns in namespaces.items]
             # This iterates over each namespace object and gets its name
             return [ns.metadata.name for ns in namespaces.items]
-            
+
         except ApiException as e:
             # Log the error and return empty list
             # This allows the program to continue with fewer namespaces
@@ -277,7 +277,7 @@ class KubernetesClient:
         EXAMPLE:
             # Small namespace (< 500 pods):
             # One API call returns all pods
-            
+
             # Large namespace (1500 pods):
             # API call 1: Returns 500 pods + _continue="token123"
             # API call 2: Returns 500 pods + _continue="token456"
@@ -452,15 +452,17 @@ class KubernetesClient:
                         "message": pod.status.message or "No message",
                         "create_time": pod.metadata.creation_timestamp,
                         "restart_count": pod.status.container_statuses[0].restart_count
-                                       if pod.status.container_statuses
-                                       else 0
+                        if pod.status.container_statuses
+                        else 0,
                     }
-                    
+
                     # Add to unhealthy list
                     unhealthy_pods.append(pod_info)
-                    
+
                     # Log the finding
-                    print(f"  WARNING Found unhealthy pod: {namespace}/{pod_name} ({pod_phase})")
+                    print(
+                        f"  WARNING Found unhealthy pod: {namespace}/{pod_name} ({pod_phase})"
+                    )
 
         # Return list of all unhealthy pods
         return unhealthy_pods
@@ -521,11 +523,11 @@ class KubernetesClient:
                 namespace=namespace,
                 grace_period_seconds=0,  # Immediate restart
             )
-            
+
             # Log success
             print(f"  ✅ Deleted pod: {namespace}/{pod_name}")
             return True
-            
+
         except ApiException as e:
             # API call failed
             # Log the error and return False
@@ -597,154 +599,411 @@ class KubernetesClient:
             if self.delete_pod(namespace, pod_name):
                 # Success
                 success_count += 1
-                results.append({
-                    "name": pod_name,
-                    "namespace": namespace,
-                    "status": "success",
-                    "phase": pod["phase"]
-                })
+                results.append(
+                    {
+                        "name": pod_name,
+                        "namespace": namespace,
+                        "status": "success",
+                        "phase": pod["phase"],
+                    }
+                )
             else:
                 # Failure
                 failed_count += 1
-                results.append({
-                    "name": pod_name,
-                    "namespace": namespace,
-                    "status": "failed",
-                    "phase": pod["phase"]
-                })
+                results.append(
+                    {
+                        "name": pod_name,
+                        "namespace": namespace,
+                        "status": "failed",
+                        "phase": pod["phase"],
+                    }
+                )
 
         # Return summary
-        return {
-            "success": success_count,
-            "failed": failed_count,
-            "details": results
-        }
+        return {"success": success_count, "failed": failed_count, "details": results}
 
     # ==========================================================================
     # RECOVERY VERIFICATION WITH POLLING
     # ==========================================================================
     def wait_for_pods_ready(
-        self,
-        namespaces: List[str],
-        check_interval: int = 30,
-        max_wait_time: int = 300
+        self, namespaces: List[str], check_interval: int = 30, max_wait_time: int = 300
     ) -> Dict:
         """
-        Verify pod recovery with polling (Bonus feature).
+        Verify pod recovery with intelligent polling and early exit.
 
-        CONCEPT: Polling vs Blind Waiting
-        - Blind wait: Sleep for fixed time, check once at end
-          - Wastes time if pods recover quickly
-          - Doesn't provide progress updates
-        
-        - Polling: Check at intervals, exit early if recovered
-          - Saves time with early exit
-          - Provides progress visibility
-          - Budget protection (max_wait_time)
+        ==========================================================================
+        EXECUTION FLOW DIAGRAM
+        ==========================================================================
 
-        POLLING ALGORITHM:
-        1. Record start time
-        2. Loop until budget exhausted:
-           a. Check all pods in namespaces
-           b. If all healthy: return success (early exit)
-           c. If unhealthy: log progress, sleep, continue
-        3. If budget exhausted: return final status
+            ┌─────────────────────────────────────────────────────────────┐
+            │                    START OF FUNCTION                      │
+            └─────────────────────────┬───────────────────────────────────┘
+                                      │
+                                      ▼
+            ┌─────────────────────────────────────────────────────────────┐
+            │  1. Record start_time = time.time()                       │
+            │  2. Print "Checking pod recovery..."                       │
+            └─────────────────────────┬───────────────────────────────────┘
+                                      │
+                                      ▼
+            ┌─────────────────────────────────────────────────────────────┐
+            │              ENTER POLLING LOOP (while True)               │
+            │                     │                                      │
+            │                     ▼                                      │
+            │  3. elapsed = time.time() - start_time                    │
+            │                     │                                      │
+            │                     ▼                                      │
+            │  CHECK: elapsed >= max_wait_time?                           │
+            │          │                        │                         │
+            │         YES                       NO                        │
+            │          │                        │                         │
+            │          ▼                        ▼                         │
+            │  Print "budget exhausted"    Check pods in                │
+            │  BREAK ─────────────────► namespaces                       │
+            │         ↑                        │                         │
+            │         │                        ▼                         │
+            │         │    Check ALL pods in ALL namespaces              │
+            │         │    Build current_unhealthy list                  │
+            │         │                        │                         │
+            │         │                        ▼                         │
+            │         │    CHECK: current_unhealthy empty?              │
+            │         │    │              │                             │
+            │         │   YES             NO                            │
+            │         │    │              │                             │
+            │         │    ▼              ▼                             │
+            │         │  Print "All      Log progress                   │
+            │         │  recovered!"     "X pods still unhealthy"      │
+            │         │    │              │                             │
+            │         │    │              ▼                             │
+            │         │    │    ┌──────────────────┐                    │
+            │         │    │    │ remaining <=     │                    │
+            │         │    │    │ check_interval?  │                    │
+            │         │    │    │    │        │      │                    │
+            │         │    │   YES        NO      │                    │
+            │         │    │    │        │         │                    │
+            │         │    │    ▼        ▼         │                    │
+            │         │    │  Print     SLEEP     │                    │
+            │         │    │  "final    check_interval"                 │
+            │         │    │  check"    seconds      │                    │
+            │         │    │    │        │         │                    │
+            │         │    │    │        └─────────┘                    │
+            │         │    │    │          │                             │
+            │         │    │    └─────────┴─────────────────────────────┘
+            │         │    │                      │                      │
+            │         │    └──────────────────────┼────────────────────┘
+            │         │                               │
+            │         └──────────────────────────────┼──────────────────┐
+            │                                                │           │
+            │                                    ◄─────────┘           │
+            │                                           (loop back)     │
+            │                                                            │
+            │  EXIT FROM LOOP VIA:                                       │
+            │  1. BREAK at line ~709 (budget exhausted)                  │
+            │  2. BREAK at line ~792 (budget nearly exhausted)          │
+            │  3. RETURN at line ~776 (all recovered early)             │
+            │                                                            │
+            │  AFTER BREAK: Execution jumps to line ~798                 │
+            │  "Return final status"                                    │
+            │                                                            │
+            └─────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+            ┌─────────────────────────────────────────────────────────────┐
+            │           RETURN {"still_unhealthy": [...],               │
+            │                  "all_recovered": True/False}             │
+            │                    END OF FUNCTION                        │
+            └─────────────────────────────────────────────────────────────┘
 
-        PARAMETERS:
-        - namespaces: List of namespaces to check
-        - check_interval: Seconds between checks (30 = default)
-        - max_wait_time: Maximum total time to wait (300 = 5 min)
+        ==========================================================================
+        PARAMETERS
+        ==========================================================================
+        - namespaces: List of namespace names to check (e.g., ["default", "prod"])
+        - check_interval: Seconds to sleep between checks (default: 30 seconds)
+                         THIS VALUE CONTROLS: Line ~795 (time.sleep(check_interval))
+        - max_wait_time: Maximum total time budget in seconds (default: 300 = 5 minutes)
 
-        WHAT THIS CODE DOES:
-        1. Record start time
-        2. Enter polling loop
-        3. Check if time budget exhausted (exit if yes)
-        4. Check all pods in all namespaces
-        5. If all healthy: return success with early exit
-        6. If unhealthy: log progress, sleep, continue
-        7. Return final status with list of still-unhealthy pods
+        WHERE CHECK_INTERVAL IS USED:
+        ┌─────────────────────────────────────────────────────────────────┐
+        │ LINE 795: time.sleep(check_interval)                           │
+        │                                                              │
+        │     if remaining <= check_interval:                          │
+        │         print("final check...")                              │
+        │         still_unhealthy = ...                                │
+        │         BREAK ──────────────────────► skip sleep, exit loop  │
+        │     else:                                                     │
+        │         time.sleep(check_interval) ◄─── SLEEP HERE (interval)│
+        │                                                              │
+        │ Flow: Check → Unhealthy → Log → Check budget → Sleep         │
+        │       ↑                                      │                │
+        │       └──────────────────────────────────────┘                │
+        │                  (loop back to check again)                   │
+        └─────────────────────────────────────────────────────────────────┘
 
-        RETURN VALUE STRUCTURE:
-            {
-                "still_unhealthy": [...],  # List of pods still unhealthy
-                "all_recovered": True/False
-            }
+        WHERE BREAK JUMPS TO:
+        ┌─────────────────────────────────────────────────────────────────┐
+        │ BREAK at line 709 (budget exhausted):                         │
+        │     Execution jumps directly to line 798 (return statement)    │
+        │                                                              │
+        │ BREAK at line 792 (budget nearly exhausted):                  │
+        │     Execution jumps directly to line 798 (return statement)    │
+        │                                                              │
+        │ IMPORTANT: After either break, the code at line 795          │
+        │ (time.sleep) is SKIPPED - we exit the loop immediately       │
+        └─────────────────────────────────────────────────────────────────┘
 
-        CLUSTER SIZE AWARENESS (set in main.py):
-        - SMALL: 180s budget, 30s interval (~6 checks)
-        - MEDIUM: 150s budget, 30s interval (~5 checks)
-        - LARGE: 120s budget, 60s interval (~2 checks)
+        ==========================================================================
+        WHAT THIS CODE DOES (STEP BY STEP)
+        ==========================================================================
+        STEP 1: Initialize
+        ┌─────────────────────────────────────────────────────────────────┐
+        │ start_time = time.time()          # Record when we started   │
+        │ still_unhealthy = []               # Prepare empty list        │
+        │ print(...)                        # Log "Checking recovery..."│
+        └─────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+        STEP 2: Enter Polling Loop (while True - infinite loop until we return/break)
+                                    │
+                                    ▼
+        STEP 3: Calculate elapsed time
+        ┌─────────────────────────────────────────────────────────────────┐
+        │ elapsed = time.time() - start_time                             │
+        │ # Example: If 45 seconds have passed, elapsed = 45.0            │
+        └─────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+        STEP 4: Check if time budget exhausted
+        ┌─────────────────────────────────────────────────────────────────┐
+        │ if elapsed >= max_wait_time:                                   │
+        │     print("budget exhausted")                                  │
+        │     BREAK ──────────► jumps to STEP 8 (return)                 │
+        └─────────────────────────────────────────────────────────────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    │                               │
+                   NO                              YES
+                    │                               │
+                    ▼                               ▼
+        STEP 5: Check all pods in all namespaces                    STEP 8: Return
+        ┌─────────────────────────────────────────────────────────┐   ┌─────────────────┐
+        │ for namespace in namespaces:                              │   │                 │
+        │     if should_skip_namespace(namespace):                  │   │ return {        │
+        │         continue                                          │   │     "still_unhealthy": still_unhealthy,│
+        │     pods = self.get_pods_in_namespace(namespace)          │   │     "all_recovered": len(...) == 0  │
+        │     for pod in pods:                                      │   │ }               │
+        │         Check phase and container status                  │   │                 │
+        │         If unhealthy: add to current_unhealthy list       │   └─────────────────┘
+        └─────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+        STEP 6: Check if all pods recovered (EARLY EXIT condition)
+        ┌─────────────────────────────────────────────────────────────────┐
+        │ if not current_unhealthy:  # List is empty = all healthy      │
+        │     print("All pods recovered!")                               │
+        │     return {"still_unhealthy": [], "all_recovered": True}     │
+        │                          │                                     │
+        │                          │ (IMMEDIATE EXIT - no break needed) │
+        │                          ▼                                     │
+        │                 FUNCTION ENDS HERE                             │
+        └─────────────────────────────────────────────────────────────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    │                               │
+                   NO                              YES
+                    │                               │
+                    ▼                               ▼
+        STEP 7: Log progress and decide whether to sleep or exit
+        ┌─────────────────────────────────────────────────────────────────┐
+        │ remaining = max_wait_time - elapsed                           │
+        │ print(f"{len(current_unhealthy)} pods still unhealthy...")    │
+        │                                                               │
+        │ if remaining <= check_interval:                               │
+        │     print("Budget nearly exhausted, doing final check...")   │
+        │     still_unhealthy = current_unhealthy                        │
+        │     BREAK ──────────► jumps to STEP 8 (return)                │
+        │                          │                                     │
+        │                          │ (skips sleep, exits loop)           │
+        │                          ▼                                     │
+        │     LINE 795 (time.sleep) IS SKIPPED!                         │
+        │     Execution jumps directly to return statement              │
+        │                                                               │
+        │ else:                                                         │
+        │     time.sleep(check_interval) ◄─── WAIT HERE (interval)     │
+        │          │                                                    │
+        │          │ (blocks for 30 seconds by default)                 │
+        │          │                                                    │
+        │          ▼                                                    │
+        │     LOOP BACK TO STEP 2 (while True loop)                    │
+        │                          │                                     │
+        │                          └─────────────────────────────┬───────┘
+        │                                                    │
+        │                                    ◄────────────────┘
+        │                                           (check again after sleep)
+        │
+        └─────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+        STEP 8: Return final status (after any break or early exit)
+        ┌─────────────────────────────────────────────────────────────────┐
+        │ return {                                                       │
+        │     "still_unhealthy": still_unhealthy,  # List of failed pods│
+        │     "all_recovered": len(still_unhealthy) == 0                │
+        │ }                                                              │
+        └─────────────────────────────────────────────────────────────────┘
 
-        EXAMPLE TIMELINE:
-            Time  0s:   Start checking (3 unhealthy)
-            Time 30s:   Check (2 unhealthy) - sleep 30s
-            Time 60s:   Check (1 unhealthy) - sleep 30s
-            Time 90s:   Check (0 unhealthy) - EARLY EXIT!
-            Total: 90s instead of 180s budget
+        ==========================================================================
+        EXAMPLE TIMELINE
+        ==========================================================================
+        Scenario: 3 unhealthy pods at start, max_wait_time=180s, check_interval=30s
 
-        RELATED:
-        - Called by: main.py:main() in Step 5
-        - Parameters set in: main.py based on cluster size
-        - Output used by: send_alert() if recovery failed
+        Time    │ Action                                      │ Loop State
+        ─────────┼────────────────────────────────────────────┼───────────────
+        0s      │ Start checking (3 unhealthy)                │ ─────────────
+        0s      │ Check pods                                  │ Iteration 1
+        0s      │ 3 unhealthy, log progress                   │    │
+        0s      │ remaining=180 > 30, so SLEEP 30s           │    │ time.sleep(30)
+        ─────────┼────────────────────────────────────────────┼──────────────
+        30s     │ Loop back to top                            │ ─────────────
+        30s     │ elapsed=30, Check pods                      │ Iteration 2
+        30s     │ 2 unhealthy, log progress                   │    │
+        30s     │ remaining=150 > 30, so SLEEP 30s            │    │ time.sleep(30)
+        ─────────┼────────────────────────────────────────────┼──────────────
+        60s     │ Loop back to top                            │ ─────────────
+        60s     │ elapsed=60, Check pods                      │ Iteration 3
+        60s     │ 1 unhealthy, log progress                   │    │
+        60s     │ remaining=120 > 30, so SLEEP 30s            │    │ time.sleep(30)
+        ─────────┼────────────────────────────────────────────┼──────────────
+        90s     │ Loop back to top                            │ ─────────────
+        90s     │ elapsed=90, Check pods                      │ Iteration 4
+        90s     │ 0 unhealthy! Return early!                 │    │ EARLY EXIT
+        ─────────┼────────────────────────────────────────────┘    │ no break
+        90s     │ FUNCTION RETURNS HERE                       │    ▼
+              TOTAL TIME: 90s (instead of full 180s budget)  │ EXIT
+
+        ==========================================================================
+        CLUSTER SIZE AWARENESS (parameters set in main.py based on cluster size)
+        ==========================================================================
+        ┌──────────┬────────────────┬────────────────┬────────────────────────┐
+        │ Cluster  │ max_wait_time │ check_interval │ Number of checks       │
+        │  Size    │ (time budget) │ (sleep after  │ (180s / 30s = 6)      │
+        │          │               │  each check)  │                        │
+        ├──────────┼────────────────┼────────────────┼────────────────────────┤
+        │ SMALL    │     180s       │      30s      │ ~6 checks (early exit) │
+        │ (≤50 ns) │                │                │                        │
+        ├──────────┼────────────────┼────────────────┼────────────────────────┤
+        │ MEDIUM   │     150s       │      30s      │ ~5 checks (early exit) │
+        │ (≤200 ns)│                │                │                        │
+        ├──────────┼────────────────┼────────────────┼────────────────────────┤
+        │ LARGE    │     120s       │      60s      │ ~2 checks (early exit) │
+        │ (>200 ns)│                │                │ Longer interval for    │
+        │          │                │                │ large clusters         │
+        └──────────┴────────────────┴────────────────┴────────────────────────┘
+
+        ==========================================================================
+        RETURN VALUE STRUCTURE
+        ==========================================================================
+        {
+            "still_unhealthy": [
+                {
+                    "name": "my-app-pod-abc123",
+                    "namespace": "production",
+                    "phase": "Running",
+                    "reason": "CrashLoopBackOff",
+                    "message": "Back-off restarting failed container",
+                    "container_reason": "CrashLoopBackOff",
+                    "container_message": "Back-off restarting failed container"
+                },
+            ],
+            "all_recovered": False  # True if all pods healthy
+        }
+
+        ==========================================================================
+        RELATED
+        ==========================================================================
+        - Called by: main.py:main() after restart_pods() in recovery verification step
+        - Parameters set in: main.py based on cluster namespace count
+        - Output used by: send_alert() if any pods still unhealthy after budget exhausted
         """
+        # =========================================================================
+        # STEP 1: INITIALIZATION
         # Record start time for budget tracking
-        start_time = time.time()
-        still_unhealthy = []
+        # =========================================================================
+        start_time = time.time()  # Reference point for all time calculations
+        still_unhealthy = []  # Will hold pods that never recovered
 
         # Log start of recovery verification
         print(
             f"\n⏳ Checking pod recovery (budget={max_wait_time}s, interval={check_interval}s)..."
         )
 
-        # Polling loop
+        # =========================================================================
+        # STEP 2: ENTER POLLING LOOP
+        # This is an infinite loop (while True) that only exits via:
+        #   1. RETURN at line ~776 (all pods recovered - early exit)
+        #   2. BREAK at line ~709 (time budget exhausted)
+        #   3. BREAK at line ~792 (budget nearly exhausted, skip sleep)
+        # =========================================================================
         while True:
-            # Calculate elapsed time
-            elapsed = time.time() - start_time
+            # =====================================================================
+            # STEP 3: CALCULATE ELAPSED TIME
+            # How many seconds have passed since we started checking?
+            # =====================================================================
+            elapsed = time.time() - start_time  # Floating point seconds
 
-            # Check if budget exhausted
+            # =====================================================================
+            # STEP 4: CHECK IF TIME BUDGET EXHAUSTED
+            # If we've used up our time budget, stop checking and return results
+            # =====================================================================
             if elapsed >= max_wait_time:
                 print(
                     f"   ⏰ Recovery budget exhausted ({elapsed:.1f}s), doing final check..."
                 )
+                # EXECUTION JUMPS HERE AFTER BREAK:
+                # After this break, code continues at line ~798 (return statement)
+                # The time.sleep() at line ~795 is SKIPPED entirely
                 break
 
-            # Check all pods in all namespaces
-            current_unhealthy = []
+            # =====================================================================
+            # STEP 5: CHECK ALL PODS IN ALL NAMESPACES
+            # Iterate through each namespace and check every pod's health
+            # Build a list of pods that are still unhealthy
+            # =====================================================================
+            current_unhealthy = []  # Reset for this iteration
 
             for namespace in namespaces:
-                # Skip excluded namespaces
+                # Skip excluded namespaces (e.g., kube-system)
                 if should_skip_namespace(namespace):
                     continue
 
-                # Get all pods in this namespace
+                # Get all pods in this namespace from Kubernetes API
                 pods = self.get_pods_in_namespace(namespace)
 
-                # Check each pod
+                # Examine each pod individually
                 for pod in pods:
                     pod_name = pod.metadata.name
                     pod_phase = pod.status.phase
 
-                    # Check if phase is healthy
+                    # Check if pod phase is healthy (Running/Init/Succeeded)
                     phase_healthy = is_pod_healthy(pod_phase)
 
-                    # Check container status
+                    # Check all container statuses within the pod
                     container_healthy = True
                     for container in pod.status.container_statuses or []:
                         state = container.state
 
-                        # CrashLoopBackOff or waiting
+                        # Container is in waiting state (CrashLoopBackOff, etc.)
                         if state.waiting:
                             container_healthy = False
-                            break
+                            break  # Exit container loop early, pod is unhealthy
 
-                        # Terminated with error
+                        # Container terminated with non-zero exit code (error)
                         if state.terminated and state.terminated.exit_code != 0:
                             container_healthy = False
-                            break
+                            break  # Exit container loop early, pod is unhealthy
 
-                    # If unhealthy, collect details
+                    # If either pod phase or container is unhealthy, record it
                     if not phase_healthy or not container_healthy:
-                        # Get detailed reason
+                        # Extract detailed reason for logging/alerting
                         container_reason = "Unknown"
                         container_message = "No message"
 
@@ -752,49 +1011,82 @@ class KubernetesClient:
                             state = container.state
                             if state.waiting:
                                 container_reason = state.waiting.reason or "Unknown"
-                                container_message = state.waiting.message or "No message"
+                                container_message = (
+                                    state.waiting.message or "No message"
+                                )
                                 break
                             elif state.terminated and state.terminated.exit_code != 0:
-                                container_reason = f"exitCode={state.terminated.exit_code}"
-                                container_message = state.terminated.reason or "No message"
+                                container_reason = (
+                                    f"exitCode={state.terminated.exit_code}"
+                                )
+                                container_message = (
+                                    state.terminated.reason or "No message"
+                                )
                                 break
 
-                        # Add to unhealthy list
-                        current_unhealthy.append({
-                            "name": pod_name,
-                            "namespace": namespace,
-                            "phase": pod_phase,
-                            "reason": pod.status.reason or "Unknown",
-                            "message": pod.status.message or "No message",
-                            "container_reason": container_reason,
-                            "container_message": container_message,
-                        })
+                        # Add to list of unhealthy pods for this iteration
+                        current_unhealthy.append(
+                            {
+                                "name": pod_name,
+                                "namespace": namespace,
+                                "phase": pod_phase,
+                                "reason": pod.status.reason or "Unknown",
+                                "message": pod.status.message or "No message",
+                                "container_reason": container_reason,
+                                "container_message": container_message,
+                            }
+                        )
 
-            # Check if all pods recovered (early exit)
+            # =====================================================================
+            # STEP 6: CHECK IF ALL PODS RECOVERED (EARLY EXIT)
+            # If no unhealthy pods found, return success immediately
+            # This is the EARLY EXIT - we don't wait for full time budget
+            # =====================================================================
             if not current_unhealthy:
+                # current_unhealthy is empty = all pods healthy!
                 print(f"   ✅ All pods recovered! (elapsed={elapsed:.1f}s)")
-                return {
-                    "still_unhealthy": [],
-                    "all_recovered": True
-                }
+                # RETURN IMMEDIATELY - function ends here
+                # No break needed, return exits the function directly
+                return {"still_unhealthy": [], "all_recovered": True}
 
-            # Log progress
-            remaining = max_wait_time - elapsed
+            # =====================================================================
+            # STEP 7: LOG PROGRESS AND DECIDE NEXT ACTION
+            # Either sleep and continue, or exit if budget nearly exhausted
+            # =====================================================================
+            remaining = max_wait_time - elapsed  # Seconds left in our budget
+
             print(
                 f"   ⚠️ {len(current_unhealthy)} pods still unhealthy, {remaining:.0f}s remaining..."
             )
 
-            # Decide: continue polling or exit
+            # Decide: should we continue polling or exit the loop?
             if remaining <= check_interval:
-                # Not enough time for another full interval
+                # Not enough time for another full check + sleep cycle
+                # Exit the loop and return results
                 print("   ⏰ Budget nearly exhausted, doing final check...")
                 still_unhealthy = current_unhealthy
+                # EXECUTION JUMPS HERE AFTER BREAK:
+                # After this break, code continues at line ~798 (return statement)
+                # The time.sleep() below is SKIPPED entirely
+                # This break is at line ~792
                 break
             else:
-                # Sleep before next check
+                # Enough time remaining, sleep for one interval then check again
+                # THIS IS WHERE THE WAITING INTERVAL TAKES EFFECT
+                # Line ~795: Sleep for check_interval seconds (default: 30s)
+                # During sleep, the function is blocked - no CPU usage
+                # After sleep completes, loop continues from the top (STEP 2)
                 time.sleep(check_interval)
+                # After sleep finishes, execution continues at STEP 2
+                # (the while True loop continues)
 
-        # Return final status
+        # =========================================================================
+        # STEP 8: RETURN FINAL STATUS
+        # This is where execution lands after:
+        #   - BREAK at line 709 (budget exhausted)
+        #   - BREAK at line 792 (budget nearly exhausted)
+        # The time.sleep() at line 795 is NEVER executed after a break
+        # =========================================================================
         return {
             "still_unhealthy": still_unhealthy,
             "all_recovered": len(still_unhealthy) == 0,
