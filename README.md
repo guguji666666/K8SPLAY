@@ -339,46 +339,56 @@ kubectl logs -l app=pod-cleaner -f
                         └─────────────────────────┘
 ```
 
-### Build & Deployment Dependencies
+### Build & Deployment Flow
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                       Build & Deployment Flow                        │
-└─────────────────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │                              Deployment Options                               │
+  └─────────────────────────────────────────────────────────────────────────────┘
 
-requirements.txt ──────► Dockerfile ──────► pod-cleaner:latest (Image)
-      │                      │
-      │                      │ references
-      ▼                      ▼
-┌─────────────────┐   ┌─────────────────┐
-│ Python deps     │   │ Image build     │
-│ - kubernetes    │   │ - Base image   │
-│ - requests      │   │ - Install deps  │
-└─────────────────┘   │ - Copy src/     │
-                      └────────┬────────┘
-                               │
-                               ▼
-                    ┌──────────────────────────┐
-                    │   Push to registry       │
-                    └──────────┬───────────────┘
-                               │
-              ┌────────────────┼────────────────┐
-              │                │                │
-              ▼                ▼                ▼
-    ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-    │ k8s-manifest.yaml│ │ Helm values.yaml│ │ Helm Chart.yaml │
-    │ (Native K8s)    │ │  (Helm params)  │ │  (Chart meta)   │
-    └────────┬────────┘ └────────┬────────┘ └─────────────────┘
-             │                   │
-             │ references        │ references
-             ▼                   ▼
-    ┌─────────────────┐ ┌─────────────────────────┐
-    │ Helm templates/  │ │ Image URL at deployment │
-    │ - deployment.yaml │ └─────────────────────────┘
-    │ - rbac.yaml     │
-    └─────────────────┘
+  OPTION A: Helm (Recommended)                         OPTION B: Native Manifest
+  ────────────────────────────                         ───────────────────────────
+  helm install pod-cleaner \                            kubectl apply -f k8s-manifest.yaml
+    -f helm/pod-cleaner/ \                             
+    --set image.repository=xxx \                       (requires editing image URL manually)
+    --set image.tag=latest
+```
 
-README.md (Documentation)
+### File Relationship Map
+
+| File | Type | What It Contains | References |
+|------|------|------------------|------------|
+| `src/main.py` | Source Code | Main loop, orchestration | imports: config, kube_client, notifier |
+| `src/config.py` | Source Code | Configuration parameters | - |
+| `src/kube_client.py` | Source Code | K8s API operations | - |
+| `src/notifier.py` | Source Code | Bark notifications | - |
+| `requirements.txt` | Dependency List | Python packages | referenced by Dockerfile |
+| `Dockerfile` | Build Config | Image build instructions | COPY: src/ , RUN: pip install -r requirements.txt |
+| `pod-cleaner:latest` | Container Image | Runtime artifact | referenced by Helm & k8s-manifest |
+| `helm/Chart.yaml` | Helm Metadata | Chart name, version, dependencies | - |
+| `helm/values.yaml` | Helm Config | Default configuration | referenced by templates |
+| `helm/templates/deployment.yaml` | K8s Resource | Pod spec | references: image.repository, image.tag from values |
+| `helm/templates/rbac.yaml` | K8s Resource | RBAC permissions | - |
+| `helm/templates/_helpers.tpl` | Helm Template | Reusable template functions | used by other templates |
+| `k8s-manifest.yaml` | K8s Resources | Deployment + RBAC + ServiceAccount | hardcoded image URL |
+| `README.md` | Documentation | Project overview | - |
+
+### Build Dependency Chain
+
+```
+src/* (source code)
+      │
+      │ copied into image
+      ▼
+Dockerfile ──────► pod-cleaner:latest (container image)
+      │                    │
+      │                    │ referenced by
+      │                    ▼
+      │           helm/values.yaml (image.repository + tag)
+      │                    │
+      │                    │ used by
+      ▼                    ▼
+requirements.txt     helm/templates/deployment.yaml
 ```
 
 ### Core Data Flow
