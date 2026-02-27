@@ -28,6 +28,8 @@ from typing import List, Dict
 from kube_client import KubernetesClient
 from notifier import BarkNotifier
 from config import Config
+from persistence_store import PersistenceStore
+from recovery_checker import RecoveryChecker
 
 
 def setup_logging():
@@ -97,7 +99,22 @@ def main():
     print(" Initializing Bark notifier...")
     notifier = BarkNotifier()
 
-    print("\nOK Initialization complete, starting...\n")
+    # Initialize persistence store
+    print(" Initializing persistence store...")
+    persistence_file = Config.get_persistence_file()
+    store = PersistenceStore(file_path=persistence_file)
+
+    # Initialize recovery checker
+    print(" Initializing recovery checker...")
+    recovery_enabled = Config.get_recovery_enabled()
+    recovery_checker = RecoveryChecker(
+        kube_client=kube_client,
+        store=store,
+        config=Config
+    ) if recovery_enabled else None
+
+    print(f"\nOK Initialization complete, starting...\n")
+    print(f"   Recovery verification: {'Enabled' if recovery_checker else 'Disabled'}")
 
     # ============================================================
     # Main Loop
@@ -134,8 +151,20 @@ def main():
         else:
             print(f"   WARNING Found {unhealthy_count} unhealthy pod(s)")
 
-            # Step 3: Restart unhealthy pods
+            # Step 3: Restart unhealthy pods and track for recovery verification
             print("\n Step 3: Restarting unhealthy pods...")
+            
+            if recovery_checker:
+                # Track each pod before deletion for recovery verification
+                for pod in unhealthy_pods:
+                    pod_uid = pod.get('uid', pod['name'])  # Use UID if available
+                    store.track_deletion(
+                        pod_uid=pod_uid,
+                        pod_name=pod['name'],
+                        namespace=pod['namespace'],
+                        reason=pod.get('reason', 'Unhealthy')
+                    )
+            
             restart_result = kube_client.restart_pods(unhealthy_pods)
             print(f"   Success: {restart_result['success']}, Failed: {restart_result['failed']}")
 
@@ -148,44 +177,81 @@ def main():
                     details=restart_result['details']
                 )
 
-            # Step 5: Check if alert is needed (Bonus)
-            print("\nWARNING Step 5: Checking restart status (waiting 5 minutes)...")
-            time.sleep(300)  # Wait 5 minutes
-
-            recovery_result = kube_client.wait_for_pods_ready(
-                namespaces=namespaces,
-                check_interval=30,
-                max_wait_time=120  # Wait another 2 minutes
-            )
-
-            if not recovery_result['all_recovered']:
-                unhealthy = recovery_result['still_unhealthy']
-                print(f"   WARNING: Found {len(unhealthy)} unrecovered pod(s)")
-
-                # Aggregate all unhealthy pods into one notification
-                alert_title = f"WARNING: {len(unhealthy)} Pods Unhealthy"
-                alert_body = f"Found {len(unhealthy)} pods still unhealthy after restart:\n\n"
-
-                for pod in unhealthy:
-                    container_reason = pod.get('container_reason', 'Unknown')
-                    container_message = pod.get('container_message', 'No message')
+            # Step 5: Recovery verification (NEW FEATURE)
+            if recovery_checker:
+                print("\n🔍 Step 5: Verifying pod recovery...")
+                
+                # Wait for new pods to be created
+                wait_time = Config.get_recovery_wait_seconds()
+                print(f"   Waiting {wait_time}s for new pod creation...")
+                time.sleep(wait_time)
+                
+                # Verify recovery for all tracked pods
+                verification_result = recovery_checker.verify_all_tracked()
+                
+                # Handle persistent issues
+                if verification_result['persistent_issues'] > 0:
+                    print(f"\n🔥 Found {verification_result['persistent_issues']} persistent issue(s)")
                     
-                    alert_body += f"Pod: {pod['namespace']}/{pod['name']}\n"
-                    alert_body += f"Phase: {pod['phase']}\n"
-                    alert_body += f"Reason: {container_reason}\n"
-                    alert_body += f"Details: {container_message[:100]}{'...' if len(container_message) > 100 else ''}\n"
-                    alert_body += "-" * 40 + "\n"
-
-                # Send single aggregated notification
-                notifier.send_alert(
-                    pod_name="Multiple Pods",
-                    namespace="Multiple",
-                    phase="Various",
-                    reason=f"{len(unhealthy)} pods unhealthy",
-                    message=alert_body
-                )
+                    for result in verification_result['results']:
+                        if result.get('persistent_issue'):
+                            tracking = result.get('tracking_info', {})
+                            esc_info = recovery_checker.get_escalation_info(result['uid'])
+                            
+                            if esc_info:
+                                # Send escalation notification
+                                notifier.send_escalation(
+                                    pod_name=esc_info['name'],
+                                    namespace=esc_info['namespace'],
+                                    attempt=esc_info['attempt'],
+                                    reason=esc_info['reason'],
+                                    first_deleted_at=esc_info['first_deleted_at'],
+                                    history=esc_info['history']
+                                )
+                                print(f"   🔥 Escalation sent for {esc_info['namespace']}/{esc_info['name']}")
+                
+                # Send verification report
+                if notifier.enabled and verification_result['total'] > 0:
+                    notifier.send_recovery_verification_report(verification_result)
             else:
-                print("   OK All pods recovered")
+                # Legacy recovery check (wait 5 minutes)
+                print("\n⚠️ Step 5: Checking restart status (legacy mode, waiting 5 minutes)...")
+                time.sleep(300)  # Wait 5 minutes
+
+                recovery_result = kube_client.wait_for_pods_ready(
+                    namespaces=namespaces,
+                    check_interval=30,
+                    max_wait_time=120  # Wait another 2 minutes
+                )
+
+                if not recovery_result['all_recovered']:
+                    unhealthy = recovery_result['still_unhealthy']
+                    print(f"   WARNING: Found {len(unhealthy)} unrecovered pod(s)")
+
+                    # Aggregate all unhealthy pods into one notification
+                    alert_title = f"WARNING: {len(unhealthy)} Pods Unhealthy"
+                    alert_body = f"Found {len(unhealthy)} pods still unhealthy after restart:\n\n"
+
+                    for pod in unhealthy:
+                        container_reason = pod.get('container_reason', 'Unknown')
+                        container_message = pod.get('container_message', 'No message')
+                        
+                        alert_body += f"Pod: {pod['namespace']}/{pod['name']}\n"
+                        alert_body += f"Phase: {pod['phase']}\n"
+                        alert_body += f"Reason: {container_reason}\n"
+                        alert_body += f"Details: {container_message[:100]}{'...' if len(container_message) > 100 else ''}\n"
+                        alert_body += "-" * 40 + "\n"
+
+                    # Send single aggregated notification
+                    notifier.send_alert(
+                        pod_name="Multiple Pods",
+                        namespace="Multiple",
+                        phase="Various",
+                        reason=f"{len(unhealthy)} pods unhealthy",
+                        message=alert_body
+                    )
+                else:
+                    print("   OK All pods recovered")
 
         # Step 6: Log run results
         print("\n Step 6: Logging run results...")

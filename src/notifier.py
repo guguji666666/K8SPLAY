@@ -208,3 +208,74 @@ class BarkNotifier:
             body=body,
             level="passive"  # Silent notification
         )
+
+    def send_escalation(
+        self,
+        pod_name: str,
+        namespace: str,
+        attempt: int,
+        reason: str,
+        first_deleted_at: str,
+        history: List[Dict]
+    ) -> bool:
+        """
+        Send escalation notification for persistent issues
+
+        Parameters:
+            pod_name: str - Pod name
+            namespace: str - Namespace
+            attempt: int - Current attempt number
+            reason: str - Failure reason
+            first_deleted_at: str - First deletion timestamp
+            history: List[Dict] - Deletion history
+
+        Returns:
+            bool - Whether send was successful
+        """
+        # Build escalation content
+        body = f"🚨 PERSISTENT ISSUE DETECTED\n\n"
+        body += f"Pod: {namespace}/{pod_name}\n"
+        body += f"Attempt: {attempt}\n"
+        body += f"Reason: {reason}\n"
+        body += f"First detected: {first_deleted_at}\n\n"
+
+        # Add history summary
+        if history:
+            body += f"📋 History ({len(history)} restarts):\n"
+            for i, entry in enumerate(history[-5:], 1):  # Show last 5 entries
+                body += f"  {i}. {entry.get('deleted_at', 'N/A')} - {entry.get('reason', 'N/A')}\n"
+
+        body += f"\n⚠️ Manual intervention required"
+        body += f"\n🔧 Check pod configuration, logs, and events"
+
+        return self.send_notification(
+            title=f"🔥 ESCALATION: {pod_name}",
+            body=body,
+            level="critical",  # Critical notification
+            icon="https://cdn-icons-png.flaticon.com/512/1087/1087830.png"  # Fire icon
+        )
+
+    def send_recovery_verification_report(
+        self,
+        summary: Dict[str, Any]
+    ) -> bool:
+        """
+        Send recovery verification summary report
+
+        Parameters:
+            summary: Dict[str, Any] - Verification summary
+
+        Returns:
+            bool - Whether send was successful
+        """
+        body = f"🔍 Recovery Verification Report\n\n"
+        body += f"Total tracked: {summary.get('total', 0)}\n"
+        body += f"✅ Recovered: {summary.get('recovered', 0)}\n"
+        body += f"⚠️ Still unhealthy: {summary.get('still_unhealthy', 0)}\n"
+        body += f"🔥 Persistent issues: {summary.get('persistent_issues', 0)}"
+
+        return self.send_notification(
+            title=f"Recovery Check Complete",
+            body=body,
+            level="active"
+        )

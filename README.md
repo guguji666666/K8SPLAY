@@ -1,6 +1,6 @@
-# Pod Cleaner — Kubernetes Pod Auto-Cleanup Tool
+# Pod Cleaner - Kubernetes Pod Auto-Cleanup Tool
 
-A lightweight Kubernetes utility that **detects abnormal pods (even when phase is `Running`)** and **forces a restart by deleting the pod** (ReplicaSet/Deployment will recreate it).  
+A lightweight Kubernetes utility that **detects abnormal pods (even when phase is `Running`)** and **forces a restart by deleting the pod** (ReplicaSet/Deployment will recreate it).
 Optional: send **Bark** notifications with detailed failure reasons.
 
 ---
@@ -30,20 +30,22 @@ Optional: send **Bark** notifications with detailed failure reasons.
 
 ### Bonus
 - 🛎️ Bark push notifications with detailed context
-- 🔁 Optional “recovery check” after restart (if implemented in code)
+- 🔁 **Recovery Verification** - Automatically verify pod health after restart
+- 🚨 **Persistent Issue Detection** - Detect and escalate pods that fail repeatedly
+- 📊 **Recovery Reports** - Get summary notifications after each verification cycle
 
 ---
 
-## 🧠 Detection Logic (What counts as “unhealthy”?)
+## 🧠 Detection Logic (What counts as "unhealthy"?)
 
-Pod Cleaner focuses on pods that appear “normal” at a glance but are actually broken:
+Pod Cleaner focuses on pods that appear "normal" at a glance but are actually broken:
 
 - Pod in `Running`/`Init` **but** container state is:
   - `waiting` with reasons like `CrashLoopBackOff`, `ImagePullBackOff`, etc.
   - `terminated` with non-zero exit code
 - Restart count spikes / repeated abnormal states (based on your logic)
 
-> This avoids the common trap: **phase == Running** doesn’t mean the container is healthy.
+> This avoids the common trap: **phase == Running** doesn't mean the container is healthy.
 
 ---
 
@@ -51,6 +53,66 @@ Pod Cleaner focuses on pods that appear “normal” at a glance but are actuall
 
 - Skip namespace: `kube-system`
 - Only evaluate pods in: `Running` and `Init` (as per current design)
+
+---
+
+## 🔄 Recovery Verification (NEW!)
+
+Pod Cleaner now includes **automatic recovery verification** to close the monitoring loop:
+
+### How It Works
+
+1. **Track Deletion**: When an unhealthy pod is deleted, Pod Cleaner records:
+   - Pod name, namespace, UID
+   - Failure reason
+   - Deletion timestamp
+   - Attempt count
+
+2. **Wait for Recreation**: Waits for the controller (Deployment/ReplicaSet) to create a new pod
+
+3. **Verify Health**: Checks if the new pod is healthy:
+   - ✅ **Healthy**: Removes tracking, sends success notification
+   - ⚠️ **Still Unhealthy**: Increments attempt counter
+   - 🔥 **Persistent Issue** (≥3 attempts): Sends escalation alert with full history
+
+4. **Cleanup**: Automatically removes old tracking entries (>24h)
+
+### Benefits
+
+- **Prevents Infinite Loops**: Detects when auto-restart isn't solving the problem
+- **Escalation Alerts**: Notifies you when manual intervention is needed
+- **Historical Context**: Includes full restart history in escalation alerts
+- **Automatic Cleanup**: No manual state management required
+
+### Configuration
+
+| Variable | Default | Description |
+|---|---|---|
+| `RECOVERY_CHECK_ENABLED` | `true` | Enable/disable recovery verification |
+| `RECOVERY_WAIT_SECONDS` | `120` | Wait time for new pod creation |
+| `RECOVERY_MAX_ATTEMPTS` | `3` | Max retries before escalation |
+| `RECOVERY_CHECK_INTERVAL` | `10` | Check interval when waiting |
+| `PERSISTENCE_FILE` | `/var/lib/pod-cleaner/state.json` | State file path |
+| `PERSISTENCE_MAX_AGE_HOURS` | `24` | Cleanup old entries after |
+
+### Example Escalation Alert
+
+```
+🔥 ESCALATION: my-app-pod-abc123
+
+Pod: default/my-app-pod-abc123
+Attempt: 3
+Reason: CrashLoopBackOff
+First detected: 2026-02-27T10:30:00
+
+📋 History (3 restarts):
+  1. 2026-02-27T10:30:00 - CrashLoopBackOff
+  2. 2026-02-27T10:35:00 - CrashLoopBackOff
+  3. 2026-02-27T10:40:00 - CrashLoopBackOff
+
+⚠️ Manual intervention required
+🔧 Check pod configuration, logs, and events
+```
 
 ---
 
@@ -64,6 +126,10 @@ Pod Cleaner focuses on pods that appear “normal” at a glance but are actuall
 | `BARK_ENABLED` | No | `true` | Enable/disable Bark notifications |
 | `LOG_LEVEL` | No | `INFO` | `DEBUG/INFO/WARNING/ERROR` |
 | `RUN_INTERVAL_SECONDS` | No | `600` | Interval between runs in seconds |
+| `RECOVERY_CHECK_ENABLED` | No | `true` | Enable recovery verification |
+| `RECOVERY_WAIT_SECONDS` | No | `120` | Wait time for new pod (seconds) |
+| `RECOVERY_MAX_ATTEMPTS` | No | `3` | Max retries before escalation |
+| `PERSISTENCE_FILE` | No | `/var/lib/pod-cleaner/state.json` | State file path |
 
 ---
 
@@ -203,7 +269,7 @@ docker run -d ^
 
 ## 🧪 Testing
 
-### 1) `test-detection-logic.py` — Detection Logic Validator
+### 1) `test-detection-logic.py` - Detection Logic Validator
 
 Validates pod health detection logic without a real cluster (and optionally against a real cluster).
 
@@ -228,13 +294,11 @@ Covered cases:
 * Abnormal terminated (exitCode != 0)
 * Normal running / normal terminated (exitCode 0)
 
-
 screenshot for Step 4: Send cleanup notification after restarting unhealthy pods in main.py <br>
 <img width="1206" height="2622" alt="image" src="https://github.com/user-attachments/assets/3c8509fd-2a6e-4224-afc0-9f7623b8ebc4" />
 
 screenshot for Step 5: trigger notifications if some pods still failed to start  in main.py <br>
 <img width="1206" height="2622" alt="image" src="https://github.com/user-attachments/assets/f04a327e-3254-4da8-a6d1-af02485acccb" />
-
 
 ### 2) `test-always-failed-pods.yaml` — Always-failing pods
 
@@ -243,6 +307,48 @@ Creates a pod that exits with code `1` after 10 seconds, producing CrashLoopBack
 ```bash
 kubectl apply -f test-always-failed-pods.yaml
 kubectl get pods -n test-failed-pods -w
+```
+
+### 3) `test-recovery-feature.py` - Recovery Verification Tests (NEW!)
+
+Tests the recovery verification functionality:
+
+```bash
+# Run unit tests (no cluster required for basic tests)
+python3 test-recovery-feature.py
+
+# Tests cover:
+# - Persistence store (track deletion, increment attempts, cleanup)
+# - Recovery checker (health detection, persistent issue detection)
+# - Integration test outline (requires cluster)
+```
+
+### 4) Full Recovery Flow Test
+
+To test the complete recovery verification flow:
+
+```bash
+# 1. Create a failing pod
+kubectl apply -f test-always-failed-pods.yaml
+
+# 2. Run Pod Cleaner
+python src/main.py
+
+# 3. Watch the logs:
+# - First deletion: tracked (attempt #1)
+# - Recovery check: new pod still unhealthy
+# - Second deletion: tracked (attempt #2)
+# - Third deletion: tracked (attempt #3)
+# - Escalation: persistent issue detected!
+
+# 4. Check notifications:
+# - Cleanup report after each run
+# - Escalation alert after 3 failed attempts
+# - Recovery verification summary
+
+# 5. Cleanup
+kubectl delete -f test-always-failed-pods.yaml
+rm /var/lib/pod-cleaner/state.json  # Reset state
 ```
 
 Expected:

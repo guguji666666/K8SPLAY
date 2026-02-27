@@ -51,6 +51,28 @@ class Config:
     LOG_FORMAT = "%Y-%m-%d %H:%M:%S"
 
     # ============================================================
+    # Recovery Verification Configuration
+    # ============================================================
+
+    # Enable/disable recovery verification
+    RECOVERY_CHECK_ENABLED = True
+
+    # Wait time for new pod creation after deletion (seconds)
+    RECOVERY_WAIT_SECONDS = 120
+
+    # Maximum retry attempts before escalating
+    RECOVERY_MAX_ATTEMPTS = 3
+
+    # Check interval when waiting for new pod (seconds)
+    RECOVERY_CHECK_INTERVAL = 10
+
+    # State file path for persistence
+    PERSISTENCE_FILE = "/var/lib/pod-cleaner/state.json"
+
+    # Cleanup old entries after (hours)
+    PERSISTENCE_MAX_AGE_HOURS = 24
+
+    # ============================================================
     # Environment Variable Methods
     # ============================================================
 
@@ -75,6 +97,37 @@ class Config:
     def get_log_level(cls) -> str:
         """Get log level from environment variable or default"""
         return os.getenv("LOG_LEVEL", cls.LOG_LEVEL)
+
+    @classmethod
+    def get_recovery_enabled(cls) -> bool:
+        """Get recovery check enabled from environment variable or default"""
+        value = os.getenv("RECOVERY_CHECK_ENABLED", str(cls.RECOVERY_CHECK_ENABLED))
+        return value.lower() in ("true", "1", "yes")
+
+    @classmethod
+    def get_recovery_wait_seconds(cls) -> int:
+        """Get recovery wait time from environment variable or default"""
+        return int(os.getenv("RECOVERY_WAIT_SECONDS", str(cls.RECOVERY_WAIT_SECONDS)))
+
+    @classmethod
+    def get_recovery_max_attempts(cls) -> int:
+        """Get max retry attempts from environment variable or default"""
+        return int(os.getenv("RECOVERY_MAX_ATTEMPTS", str(cls.RECOVERY_MAX_ATTEMPTS)))
+
+    @classmethod
+    def get_recovery_check_interval(cls) -> int:
+        """Get recovery check interval from environment variable or default"""
+        return int(os.getenv("RECOVERY_CHECK_INTERVAL", str(cls.RECOVERY_CHECK_INTERVAL)))
+
+    @classmethod
+    def get_persistence_file(cls) -> str:
+        """Get persistence file path from environment variable or default"""
+        return os.getenv("PERSISTENCE_FILE", cls.PERSISTENCE_FILE)
+
+    @classmethod
+    def get_persistence_max_age_hours(cls) -> int:
+        """Get persistence max age from environment variable or default"""
+        return int(os.getenv("PERSISTENCE_MAX_AGE_HOURS", str(cls.PERSISTENCE_MAX_AGE_HOURS)))
 
 
 def get_bark_push_url():
